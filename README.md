@@ -102,5 +102,4 @@ UI 库：Element Plus / Ant Design
 
 组员：张湘宜、苏李敏，郑思彤、麦贤婷
 
-技术栈：git,github
 
