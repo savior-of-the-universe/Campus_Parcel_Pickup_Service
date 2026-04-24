@@ -2,7 +2,7 @@ package com.team.admin.dto;
 
 import lombok.Data;
 
-import javax.validation.constraints.Min;
+import jakarta.validation.constraints.Min;
 
 @Data
 public class PageRequest {
