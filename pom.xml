@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <!-- 固定为4.0.0，指定当前POM模型版本[reference:0][reference:1] -->
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- 组织标识，建议写明你们的小组或实验名，例如com.experiment.group1 -->
+    <groupId>com.team7</groupId>
+    <!-- 项目唯一标识，通常和你的仓库名/项目名保持一致 -->
+    <artifactId>campus-parcel-pickup-service</artifactId>
+    <!-- 项目版本号，开发中可使用SNAPSHOT快照版 -->
+    <version>1.0-SNAPSHOT</version>
+
+    <!-- 👇 如果你确定要使用Java 17，可以在这里指定版本 -->
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+    </properties>
+    <!-- 以后需要添加第三方库（依赖），就写在下面这个地方 -->
+    <dependencies>
+        <!-- 示例：如果需要用到JUnit单元测试，可以取消以下注释 -->
+        <!--
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13.2</version>
+            <scope>test</scope>
+        </dependency>
+        -->
+    </dependencies>
+</project>
