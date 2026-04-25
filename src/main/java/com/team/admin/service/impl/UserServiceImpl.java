@@ -67,4 +67,18 @@ public class UserServiceImpl implements UserService {
         user.setUpdateTime(LocalDateTime.now());
         return userMapper.updateById(user) > 0;
     }
+    
+    @Override
+    public User findByStudentIdOrPhone(String username) {
+        if (!StringUtils.hasText(username)) {
+            return null;
+        }
+        
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("student_id", username)
+                   .or()
+                   .eq("phone", username);
+        
+        return userMapper.selectOne(queryWrapper);
+    }
 }

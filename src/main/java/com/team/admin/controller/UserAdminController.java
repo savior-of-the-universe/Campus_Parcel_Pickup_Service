@@ -7,6 +7,7 @@ import com.team.admin.dto.UserListDTO;
 import com.team.admin.entity.User;
 import com.team.admin.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/admin/users")
 @Validated
+@PreAuthorize("hasRole('ADMIN')")
 public class UserAdminController {
 
     @Autowired

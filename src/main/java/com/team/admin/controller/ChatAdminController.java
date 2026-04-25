@@ -7,6 +7,7 @@ import com.team.admin.dto.ChatSessionDTO;
 import com.team.admin.entity.ChatMessage;
 import com.team.admin.service.ChatService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,6 +19,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/admin/chats")
 @Validated
+@PreAuthorize("hasRole('ADMIN')")
 public class ChatAdminController {
 
     @Autowired

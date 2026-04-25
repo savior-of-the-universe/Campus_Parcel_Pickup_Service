@@ -59,4 +59,11 @@ public interface UserService {
      * @return 更新结果
      */
     boolean updateUserStatus(Long id, Integer status);
+    
+    /**
+     * 根据学号或手机号查找用户
+     * @param username 学号或手机号
+     * @return 用户信息
+     */
+    User findByStudentIdOrPhone(String username);
 }
