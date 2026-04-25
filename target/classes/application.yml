@@ -1,0 +1,61 @@
+# Spring Boot 应用配置
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+spring:
+  # 数据源配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/campus_parcel?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: 0804
+  
+  # Jackson配置
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+    serialization:
+      write-dates-as-timestamps: false
+
+# MyBatis-Plus配置
+mybatis-plus:
+  # 实体扫描，多个package用逗号或者分号隔开
+  type-aliases-package: com.team.admin.entity
+  # mapper xml文件扫描路径
+  mapper-locations: classpath:mapper/*.xml
+  # 全局配置
+  global-config:
+    db-config:
+      # 主键类型
+      id-type: auto
+      # 逻辑删除配置
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  # 自定义sql注入器
+  # configuration:
+  #   map-underscore-to-camel-case: true
+
+# 日志配置
+logging:
+  level:
+    com.team.admin.mapper: debug
+    org.springframework.web: debug
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n'
+
+# WebSocket配置
+websocket:
+  endpoint: /ws/chat
+  allowed-origins: "*"
+
+# 应用自定义配置
+app:
+  # 客服用户ID（用于测试）
+  admin-user-id: 5
+  # 分页默认大小
+  default-page-size: 20
+  # 最大分页大小
+  max-page-size: 100

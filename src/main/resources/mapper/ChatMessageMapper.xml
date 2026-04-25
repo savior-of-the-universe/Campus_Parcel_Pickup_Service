@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.team.admin.mapper.ChatMessageMapper">
+
+    <!-- 聊天消息DTO结果映射 -->
+    <resultMap id="ChatMessageDTOMap" type="com.team.admin.dto.ChatMessageDTO">
+        <id column="id" property="id"/>
+        <result column="session_id" property="sessionId"/>
+        <result column="sender_id" property="senderId"/>
+        <result column="sender_name" property="senderName"/>
+        <result column="receiver_id" property="receiverId"/>
+        <result column="receiver_name" property="receiverName"/>
+        <result column="content" property="content"/>
+        <result column="content_type" property="contentType"/>
+        <result column="send_time" property="sendTime"/>
+        <result column="is_read" property="isRead"/>
+    </resultMap>
+
+    <!-- 聊天会话DTO结果映射 -->
+    <resultMap id="ChatSessionDTOMap" type="com.team.admin.dto.ChatSessionDTO">
+        <result column="session_id" property="sessionId"/>
+        <result column="user_id" property="userId"/>
+        <result column="user_name" property="userName"/>
+        <result column="unread_count" property="unreadCount"/>
+        <result column="last_message" property="lastMessage"/>
+        <result column="last_message_time" property="lastMessageTime"/>
+    </resultMap>
+
+    <!-- 分页查询会话历史消息 -->
+    <select id="selectMessagesBySessionId" resultMap="ChatMessageDTOMap">
+        SELECT 
+            cm.id, cm.session_id, cm.sender_id, cm.receiver_id, cm.content, 
+            cm.content_type, cm.send_time, cm.is_read,
+            sender.name AS sender_name,
+            receiver.name AS receiver_name
+        FROM chat_message cm
+        LEFT JOIN user sender ON cm.sender_id = sender.id
+        LEFT JOIN user receiver ON cm.receiver_id = receiver.id
+        WHERE cm.session_id = #{sessionId}
+        ORDER BY cm.send_time ASC
+    </select>
+
+    <!-- 获取客服所有活跃会话列表 -->
+    <select id="selectActiveSessions" resultMap="ChatSessionDTOMap">
+        SELECT 
+            cm.session_id,
+            CASE 
+                WHEN cm.sender_id = #{adminUserId} THEN cm.receiver_id
+                ELSE cm.sender_id
+            END AS user_id,
+            CASE 
+                WHEN cm.sender_id = #{adminUserId} THEN receiver.name
+                ELSE sender.name
+            END AS user_name,
+            SUM(CASE WHEN cm.is_read = 0 AND cm.receiver_id = #{adminUserId} THEN 1 ELSE 0 END) AS unread_count,
+            cm.content AS last_message,
+            cm.send_time AS last_message_time
+        FROM chat_message cm
+        LEFT JOIN user sender ON cm.sender_id = sender.id
+        LEFT JOIN user receiver ON cm.receiver_id = receiver.id
+        WHERE (cm.sender_id = #{adminUserId} OR cm.receiver_id = #{adminUserId})
+        AND cm.send_time = (
+            SELECT MAX(send_time) 
+            FROM chat_message cm2 
+            WHERE cm2.session_id = cm.session_id
+        )
+        GROUP BY cm.session_id
+        ORDER BY cm.send_time DESC
+    </select>
+
+    <!-- 全文搜索聊天消息 -->
+    <select id="searchMessagesByKeyword" resultMap="ChatMessageDTOMap">
+        SELECT 
+            cm.id, cm.session_id, cm.sender_id, cm.receiver_id, cm.content, 
+            cm.content_type, cm.send_time, cm.is_read,
+            sender.name AS sender_name,
+            receiver.name AS receiver_name
+        FROM chat_message cm
+        LEFT JOIN user sender ON cm.sender_id = sender.id
+        LEFT JOIN user receiver ON cm.receiver_id = receiver.id
+        <where>
+            <if test="sessionId != null and sessionId != ''">
+                AND cm.session_id = #{sessionId}
+            </if>
+            AND MATCH(cm.content) AGAINST(#{keyword} IN NATURAL LANGUAGE MODE)
+        </where>
+        ORDER BY cm.send_time DESC
+    </select>
+
+    <!-- 标记会话中的消息为已读 -->
+    <update id="markMessagesAsRead">
+        UPDATE chat_message 
+        SET is_read = 1
+        WHERE session_id = #{sessionId}
+        AND receiver_id = #{adminUserId}
+        AND is_read = 0
+    </update>
+
+    <!-- 获取会话未读消息数量 -->
+    <select id="getUnreadCount" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM chat_message
+        WHERE session_id = #{sessionId}
+        AND receiver_id = #{adminUserId}
+        AND is_read = 0
+    </select>
+
+</mapper>
