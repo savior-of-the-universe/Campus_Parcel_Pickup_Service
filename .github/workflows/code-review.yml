@@ -1,45 +1,39 @@
-name: Code Review   # 工作流名称
+name: Code Review
 
 on:
   push:
-分支: [ main, develop ]    # 推送 main 或 develop 分支时触发
+分支: [ main, develop ]
   pull_request:
-分支: [ main ]             # 向 main 分支发起 PR 或更新时触发
+分支: [ main ]
 
 jobs:
-  build-and-check:
+  sonarcloud:
     runs-on: ubuntu-latest
-
     steps:
-    # 1. 拉取代码
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # SonarQube 需要完整历史
 
-    # 2. 设置 JDK 17
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: 17
+          distribution: 'temurin'
 
-    # 3. 检查代码格式
-    - name: Check Code Format
-      run: |
-        echo "🔍 检查代码格式..."
-        # 稍后可以用 checkstyle 命令，这里暂时放个检查点的输出
-        echo "✅ 代码格式检查完成"
+      - name: Cache SonarCloud packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
 
-
-    # 4. 运行单元测试
-    - name: Run Tests
-      run: |
-        echo "🧪 运行单元测试..."
-        echo "✅ 单元测试通过"
-
-    # 5. 模拟 SonarCloud 分析
-    - name: Simulate SonarCloud Analysis
-      run: |
-        echo "📊 模拟 SonarCloud 静态代码分析..."
-        echo "✅ 分析完成，无严重问题"
+      - name: Build and analyze
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          # 如果你的项目是 Maven/Gradle，在根目录执行相应命令
+          mvn clean verify sonar:sonar \
+            -Dsonar.projectKey=你的项目key \
+            -Dsonar.organization=你的组织名 \
+            -Dsonar.host.url=https://sonarcloud.io
+          # 如果没有 Maven，可以用 SonarScanner 单独扫描
