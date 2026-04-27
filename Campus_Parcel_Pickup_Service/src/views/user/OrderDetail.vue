@@ -18,14 +18,29 @@
         <el-descriptions-item label="跑腿员">{{ detail.runnerName || '-' }}</el-descriptions-item>
         <el-descriptions-item label="跑腿员手机号">{{ detail.runnerPhone || '-' }}</el-descriptions-item>
       </el-descriptions>
+
+      <div class="timeline-section" v-if="orderedTimeline.length > 0">
+        <h4>订单时间线</h4>
+        <el-steps direction="vertical" :active="activeStep">
+          <el-step
+            v-for="(event, index) in orderedTimeline"
+            :key="index"
+            :title="event.event || '状态更新'"
+            :description="formatTimelineDesc(event)"
+            :timestamp="formatDate(event.timestamp)"
+          />
+        </el-steps>
+      </div>
     </el-card>
 
     <el-empty v-else-if="!loading" description="未找到该订单或无权查看" />
+
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import request from '@/utils/request'
@@ -35,7 +50,27 @@ const router = useRouter()
 const loading = ref(false)
 const detail = ref({})
 
+const orderedTimeline = computed(() => {
+  const list = detail.value?.timeline
+  if (!Array.isArray(list)) return []
+  return [...list].sort((a, b) => {
+    const ta = new Date(a.timestamp).getTime() || 0
+    const tb = new Date(b.timestamp).getTime() || 0
+    return ta - tb
+  })
+})
+
+const activeStep = computed(() => Math.max(orderedTimeline.value.length - 1, 0))
+
+const formatTimelineDesc = (event) => {
+  const parts = []
+  if (event?.role) parts.push(`角色: ${event.role}`)
+  if (event?.description) parts.push(event.description)
+  return parts.join('｜') || '状态更新'
+}
+
 const fetchDetail = async () => {
+
   loading.value = true
   try {
     const id = route.params.id
@@ -126,5 +161,9 @@ onMounted(() => {
 
 .info-card {
   margin-top: 12px;
+}
+
+.timeline-section {
+  margin-top: 20px;
 }
 </style>

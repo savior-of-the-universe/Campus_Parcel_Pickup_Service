@@ -174,6 +174,7 @@ public class OrderDetailDTO {
     public static class TimelineEvent {
         private String event;           // 事件名称
         private String description;     // 事件描述
+        private String role;            // 操作人角色（CUSTOMER/RUNNER/CS/ADMIN/SYSTEM）
         private LocalDateTime timestamp; // 事件时间
 
         // 无参构造器
@@ -181,9 +182,10 @@ public class OrderDetailDTO {
         }
 
         // 全参构造器
-        public TimelineEvent(String event, String description, LocalDateTime timestamp) {
+        public TimelineEvent(String event, String description, String role, LocalDateTime timestamp) {
             this.event = event;
             this.description = description;
+            this.role = role;
             this.timestamp = timestamp;
         }
 
@@ -204,6 +206,14 @@ public class OrderDetailDTO {
             this.description = description;
         }
 
+        public String getRole() {
+            return role;
+        }
+
+        public void setRole(String role) {
+            this.role = role;
+        }
+
         public LocalDateTime getTimestamp() {
             return timestamp;
         }
@@ -217,6 +227,7 @@ public class OrderDetailDTO {
             return "TimelineEvent{" +
                     "event='" + event + '\'' +
                     ", description='" + description + '\'' +
+                    ", role='" + role + '\'' +
                     ", timestamp=" + timestamp +
                     '}';
         }
