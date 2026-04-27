@@ -20,6 +20,12 @@ public class Task {
     private String remark;
     private String status;
     private LocalDateTime createTime;
+    /** 接单跑腿员ID，接单后填写 */
+    private Long runnerId;
+    /** 跑腿员昵称（冗余存储，避免关联查询） */
+    private String runnerNickname;
+    /** 跑腿员手机号（返回时脱敏） */
+    private String runnerPhone;
 
     @TableLogic
     private Integer deleted;
@@ -97,6 +103,30 @@ public class Task {
 
     public void setCreateTime(LocalDateTime createTime) {
         this.createTime = createTime;
+    }
+
+    public Long getRunnerId() {
+        return runnerId;
+    }
+
+    public void setRunnerId(Long runnerId) {
+        this.runnerId = runnerId;
+    }
+
+    public String getRunnerNickname() {
+        return runnerNickname;
+    }
+
+    public void setRunnerNickname(String runnerNickname) {
+        this.runnerNickname = runnerNickname;
+    }
+
+    public String getRunnerPhone() {
+        return runnerPhone;
+    }
+
+    public void setRunnerPhone(String runnerPhone) {
+        this.runnerPhone = runnerPhone;
     }
 
     public Integer getDeleted() {

@@ -1,6 +1,8 @@
 package com.team.admin.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.team.admin.dto.PageResult;
 import com.team.admin.dto.TaskDTO;
 import com.team.admin.dto.TaskPublishRequest;
 import com.team.admin.entity.Task;
@@ -13,6 +15,7 @@ import org.springframework.util.StringUtils;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,6 +23,8 @@ import java.util.stream.Collectors;
 public class TaskServiceImpl implements TaskService {
 
     private static final String STATUS_PENDING = "PENDING";
+    private static final List<String> IN_PROGRESS_STATUSES = Arrays.asList("PENDING", "ACCEPTED", "IN_TRANSIT");
+    private static final List<String> COMPLETED_STATUSES = Arrays.asList("COMPLETED", "CANCELLED");
 
     @Autowired
     private TaskMapper taskMapper;
@@ -29,7 +34,6 @@ public class TaskServiceImpl implements TaskService {
         if (publisherId == null) {
             throw new IllegalArgumentException("发布者信息缺失");
         }
-        // 重复发布校验：同一发布者、取件码且状态待接单
         QueryWrapper<Task> duplicateWrapper = new QueryWrapper<>();
         duplicateWrapper.eq("publisher_id", publisherId)
                 .eq("pickup_code", request.getPickupCode())
@@ -73,6 +77,45 @@ public class TaskServiceImpl implements TaskService {
         return tasks.stream().map(this::toDTO).collect(Collectors.toList());
     }
 
+    @Override
+    public PageResult<TaskDTO> getMyPublished(Long publisherId, String statusGroup, int page, int size) {
+        if (publisherId == null) {
+            return new PageResult<>(new ArrayList<>(), 0, page, size);
+        }
+        if (page < 1) page = 1;
+        if (size < 1) size = 10;
+        if (size > 50) size = 50;
+
+        QueryWrapper<Task> wrapper = new QueryWrapper<>();
+        wrapper.eq("publisher_id", publisherId);
+
+        if ("in_progress".equals(statusGroup)) {
+            wrapper.in("status", IN_PROGRESS_STATUSES);
+        } else if ("completed".equals(statusGroup)) {
+            wrapper.in("status", COMPLETED_STATUSES);
+        }
+        wrapper.orderByDesc("create_time");
+
+        Page<Task> pageParam = new Page<>(page, size);
+        Page<Task> result = taskMapper.selectPage(pageParam, wrapper);
+
+        List<TaskDTO> dtos = result.getRecords().stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+        return new PageResult<>(dtos, result.getTotal(), page, size);
+    }
+
+    @Override
+    public TaskDTO getTaskDetail(Long taskId, Long publisherId) {
+        if (taskId == null || publisherId == null) {
+            return null;
+        }
+        QueryWrapper<Task> wrapper = new QueryWrapper<>();
+        wrapper.eq("id", taskId).eq("publisher_id", publisherId);
+        Task task = taskMapper.selectOne(wrapper);
+        return task == null ? null : toDTO(task);
+    }
+
     private TaskDTO toDTO(Task task) {
         TaskDTO dto = new TaskDTO();
         dto.setId(task.getId());
@@ -83,6 +126,16 @@ public class TaskServiceImpl implements TaskService {
         dto.setRemark(task.getRemark());
         dto.setStatus(task.getStatus());
         dto.setCreateTime(task.getCreateTime());
+        dto.setRunnerNickname(task.getRunnerNickname());
+        // 手机号脱敏：保留后四位
+        if (StringUtils.hasText(task.getRunnerPhone())) {
+            String phone = task.getRunnerPhone();
+            if (phone.length() >= 4) {
+                dto.setRunnerPhoneMasked("****" + phone.substring(phone.length() - 4));
+            } else {
+                dto.setRunnerPhoneMasked("****");
+            }
+        }
         return dto;
     }
 }

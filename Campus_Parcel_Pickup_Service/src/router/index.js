@@ -125,13 +125,22 @@ const routes = [
 
   {
     path: '/user/tasks',
-
     name: 'UserTasks',
     component: () => import('@/views/user/TaskList.vue'),
     meta: {
       title: '任务管理',
       requiresAuth: true,
-      roles: ['USER', 'RUNNER']
+      roles: ['USER']
+    }
+  },
+  {
+    path: '/user/tasks/:id',
+    name: 'UserTaskDetail',
+    component: () => import('@/views/user/TaskDetail.vue'),
+    meta: {
+      title: '任务详情',
+      requiresAuth: true,
+      roles: ['USER']
     }
   },
   {
