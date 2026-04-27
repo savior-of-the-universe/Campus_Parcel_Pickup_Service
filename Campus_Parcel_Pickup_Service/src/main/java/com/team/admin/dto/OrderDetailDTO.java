@@ -18,6 +18,10 @@ public class OrderDetailDTO {
     private LocalDateTime updateTime;       // 更新时间
     private String customerName;            // 客户姓名
     private String runnerName;              // 跑腿员姓名
+    private String customerStudentId;       // 客户学号（按角色脱敏）
+    private String runnerStudentId;         // 跑腿员学号（按角色脱敏）
+    private String customerPhone;           // 客户手机号（按角色脱敏）
+    private String runnerPhone;             // 跑腿员手机号（按角色脱敏）
     private List<TimelineEvent> timeline;   // 时间线事件列表
 
     // 无参构造器
@@ -25,7 +29,7 @@ public class OrderDetailDTO {
     }
 
     // 全参构造器
-    public OrderDetailDTO(Long id, String orderNo, String title, BigDecimal amount, String status, String pickupCode, LocalDateTime createTime, LocalDateTime updateTime, String customerName, String runnerName, List<TimelineEvent> timeline) {
+    public OrderDetailDTO(Long id, String orderNo, String title, BigDecimal amount, String status, String pickupCode, LocalDateTime createTime, LocalDateTime updateTime, String customerName, String runnerName, String customerStudentId, String runnerStudentId, String customerPhone, String runnerPhone, List<TimelineEvent> timeline) {
         this.id = id;
         this.orderNo = orderNo;
         this.title = title;
@@ -36,6 +40,10 @@ public class OrderDetailDTO {
         this.updateTime = updateTime;
         this.customerName = customerName;
         this.runnerName = runnerName;
+        this.customerStudentId = customerStudentId;
+        this.runnerStudentId = runnerStudentId;
+        this.customerPhone = customerPhone;
+        this.runnerPhone = runnerPhone;
         this.timeline = timeline;
     }
 
@@ -120,6 +128,38 @@ public class OrderDetailDTO {
         this.runnerName = runnerName;
     }
 
+    public String getCustomerStudentId() {
+        return customerStudentId;
+    }
+
+    public void setCustomerStudentId(String customerStudentId) {
+        this.customerStudentId = customerStudentId;
+    }
+
+    public String getRunnerStudentId() {
+        return runnerStudentId;
+    }
+
+    public void setRunnerStudentId(String runnerStudentId) {
+        this.runnerStudentId = runnerStudentId;
+    }
+
+    public String getCustomerPhone() {
+        return customerPhone;
+    }
+
+    public void setCustomerPhone(String customerPhone) {
+        this.customerPhone = customerPhone;
+    }
+
+    public String getRunnerPhone() {
+        return runnerPhone;
+    }
+
+    public void setRunnerPhone(String runnerPhone) {
+        this.runnerPhone = runnerPhone;
+    }
+
     public List<TimelineEvent> getTimeline() {
         return timeline;
     }
@@ -195,6 +235,10 @@ public class OrderDetailDTO {
                 ", updateTime=" + updateTime +
                 ", customerName='" + customerName + '\'' +
                 ", runnerName='" + runnerName + '\'' +
+                ", customerStudentId='" + customerStudentId + '\'' +
+                ", runnerStudentId='" + runnerStudentId + '\'' +
+                ", customerPhone='" + customerPhone + '\'' +
+                ", runnerPhone='" + runnerPhone + '\'' +
                 ", timeline=" + timeline +
                 '}';
     }

@@ -13,17 +13,19 @@ public class OrderListDTO {
     private BigDecimal amount;      // 订单金额
     private String status;          // 订单状态
     private LocalDateTime createTime; // 创建时间
-    private String customerName;    // 客户姓名
-    private String runnerName;      // 跑腿员姓名
-    private String customerStudentId; // 客户学号
-    private String runnerStudentId;   // 跑腿员学号
+    private String customerName;      // 客户姓名
+    private String runnerName;        // 跑腿员姓名
+    private String customerStudentId; // 客户学号（脱敏后）
+    private String runnerStudentId;   // 跑腿员学号（脱敏后）
+    private String customerPhone;     // 客户手机号（按角色脱敏）
+    private String runnerPhone;       // 跑腿员手机号（按角色脱敏）
 
     // 无参构造器
     public OrderListDTO() {
     }
 
     // 全参构造器
-    public OrderListDTO(Long id, String orderNo, String title, BigDecimal amount, String status, LocalDateTime createTime, String customerName, String runnerName, String customerStudentId, String runnerStudentId) {
+    public OrderListDTO(Long id, String orderNo, String title, BigDecimal amount, String status, LocalDateTime createTime, String customerName, String runnerName, String customerStudentId, String runnerStudentId, String customerPhone, String runnerPhone) {
         this.id = id;
         this.orderNo = orderNo;
         this.title = title;
@@ -34,6 +36,8 @@ public class OrderListDTO {
         this.runnerName = runnerName;
         this.customerStudentId = customerStudentId;
         this.runnerStudentId = runnerStudentId;
+        this.customerPhone = customerPhone;
+        this.runnerPhone = runnerPhone;
     }
 
 
@@ -118,6 +122,22 @@ public class OrderListDTO {
         this.runnerStudentId = runnerStudentId;
     }
 
+    public String getCustomerPhone() {
+        return customerPhone;
+    }
+
+    public void setCustomerPhone(String customerPhone) {
+        this.customerPhone = customerPhone;
+    }
+
+    public String getRunnerPhone() {
+        return runnerPhone;
+    }
+
+    public void setRunnerPhone(String runnerPhone) {
+        this.runnerPhone = runnerPhone;
+    }
+
     @Override
     public String toString() {
         return "OrderListDTO{" +
@@ -131,6 +151,8 @@ public class OrderListDTO {
                 ", runnerName='" + runnerName + '\'' +
                 ", customerStudentId='" + customerStudentId + '\'' +
                 ", runnerStudentId='" + runnerStudentId + '\'' +
+                ", customerPhone='" + customerPhone + '\'' +
+                ", runnerPhone='" + runnerPhone + '\'' +
                 '}';
     }
 }

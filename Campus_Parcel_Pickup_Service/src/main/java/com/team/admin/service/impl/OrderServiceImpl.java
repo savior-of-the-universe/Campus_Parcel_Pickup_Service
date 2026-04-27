@@ -13,7 +13,11 @@ import com.team.admin.mapper.OrderMapper;
 import com.team.admin.service.OrderService;
 import com.team.dto.CustomerOrderListDTO;
 import com.team.dto.CustomerOrderSearchRequest;
+import com.team.security.JwtAuthenticationFilter;
+import com.team.utils.DataMaskingUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -42,13 +46,16 @@ public class OrderServiceImpl implements OrderService {
         if (StringUtils.hasText(searchRequest.getSort()) && "ASC".equalsIgnoreCase(searchRequest.getSort())) {
             sort = "ASC";
         }
-        return orderMapper.selectOrderListWithNames(page,
+        IPage<OrderListDTO> result = orderMapper.selectOrderListWithNames(page,
                 searchRequest.getStatus(),
                 searchRequest.getRunnerName(),
                 searchRequest.getCustomerName(),
                 searchRequest.getOrderNo(),
                 searchRequest.getStudentId(),
                 sort);
+        // CS/ADMIN 入口，统一脱敏
+        maskOrderList(result.getRecords());
+        return result;
     }
 
     @Override
@@ -74,7 +81,12 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public OrderDetailDTO getOrderDetail(Long id) {
-        return orderMapper.selectOrderDetailById(id);
+        OrderDetailDTO detail = orderMapper.selectOrderDetailById(id);
+        if (detail == null) {
+            return null;
+        }
+        applyMaskForRole(detail, true);
+        return detail;
     }
 
     @Override
@@ -87,6 +99,7 @@ public class OrderServiceImpl implements OrderService {
         if (order != null) {
             detail.setTimeline(parseTimeline(order.getTimeline()));
         }
+        applyMaskForRole(detail, true);
         return detail;
     }
 
@@ -100,6 +113,7 @@ public class OrderServiceImpl implements OrderService {
         if (order != null) {
             detail.setTimeline(parseTimeline(order.getTimeline()));
         }
+        applyMaskForRole(detail, true);
         return detail;
     }
     
@@ -154,6 +168,62 @@ public class OrderServiceImpl implements OrderService {
         order.setStatus("ACCEPTED");
         order.setUpdateTime(LocalDateTime.now());
         return orderMapper.updateById(order) > 0;
+    }
+
+    private void maskOrderList(List<OrderListDTO> records) {
+        if (records == null) {
+            return;
+        }
+        for (OrderListDTO dto : records) {
+            if (dto == null) {
+                continue;
+            }
+            dto.setCustomerStudentId(DataMaskingUtils.maskStudentId(dto.getCustomerStudentId()));
+            dto.setRunnerStudentId(DataMaskingUtils.maskStudentId(dto.getRunnerStudentId()));
+            dto.setCustomerPhone(DataMaskingUtils.maskPhone(dto.getCustomerPhone()));
+            dto.setRunnerPhone(DataMaskingUtils.maskPhone(dto.getRunnerPhone()));
+        }
+    }
+
+    private void applyMaskForRole(OrderDetailDTO detail, boolean includePhoneAndStudent) {
+        if (detail == null || !includePhoneAndStudent) {
+            return;
+        }
+        String role = getCurrentRole();
+        if (isCsOrAdmin(role)) {
+            // 客服/管理员：学号、手机号全部脱敏
+            detail.setCustomerStudentId(DataMaskingUtils.maskStudentId(detail.getCustomerStudentId()));
+            detail.setRunnerStudentId(DataMaskingUtils.maskStudentId(detail.getRunnerStudentId()));
+            detail.setCustomerPhone(DataMaskingUtils.maskPhone(detail.getCustomerPhone()));
+            detail.setRunnerPhone(DataMaskingUtils.maskPhone(detail.getRunnerPhone()));
+        } else {
+            // 非客服（用户/跑腿）：隐藏学号，仅保留对端手机号明文
+            detail.setCustomerStudentId(null);
+            detail.setRunnerStudentId(null);
+        }
+    }
+
+    private String getCurrentRole() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return null;
+        }
+        Object details = authentication.getDetails();
+        if (details instanceof JwtAuthenticationFilter.JwtUserDetails) {
+            return ((JwtAuthenticationFilter.JwtUserDetails) details).getRole();
+        }
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof JwtAuthenticationFilter.JwtUserDetails) {
+            return ((JwtAuthenticationFilter.JwtUserDetails) principal).getRole();
+        }
+        return null;
+    }
+
+    private boolean isCsOrAdmin(String role) {
+        if (!StringUtils.hasText(role)) {
+            return false;
+        }
+        return "CS".equalsIgnoreCase(role) || "ADMIN".equalsIgnoreCase(role);
     }
 
     private List<OrderDetailDTO.TimelineEvent> parseTimeline(String timelineJson) {

@@ -14,6 +14,8 @@
         <result column="runner_name" property="runnerName"/>
         <result column="customer_student_id" property="customerStudentId"/>
         <result column="runner_student_id" property="runnerStudentId"/>
+        <result column="customer_phone" property="customerPhone"/>
+        <result column="runner_phone" property="runnerPhone"/>
     </resultMap>
 
 
@@ -30,6 +32,10 @@
         <result column="update_time" property="updateTime"/>
         <result column="customer_name" property="customerName"/>
         <result column="runner_name" property="runnerName"/>
+        <result column="customer_student_id" property="customerStudentId"/>
+        <result column="runner_student_id" property="runnerStudentId"/>
+        <result column="customer_phone" property="customerPhone"/>
+        <result column="runner_phone" property="runnerPhone"/>
     </resultMap>
 
     <resultMap id="CustomerOrderListDTOMap" type="com.team.dto.CustomerOrderListDTO">
@@ -56,7 +62,9 @@
             customer.name AS customer_name,
             runner.name AS runner_name,
             customer.student_id AS customer_student_id,
-            runner.student_id AS runner_student_id
+            runner.student_id AS runner_student_id,
+            customer.phone AS customer_phone,
+            runner.phone AS runner_phone
         FROM orders o
         LEFT JOIN user customer ON o.customer_id = customer.id
         LEFT JOIN user runner ON o.runner_id = runner.id
@@ -89,7 +97,11 @@
         SELECT 
             o.id, o.order_no, o.title, o.amount, o.status, o.pickup_code, o.create_time, o.update_time,
             customer.name AS customer_name,
-            runner.name AS runner_name
+            runner.name AS runner_name,
+            customer.student_id AS customer_student_id,
+            runner.student_id AS runner_student_id,
+            customer.phone AS customer_phone,
+            runner.phone AS runner_phone
         FROM orders o
         LEFT JOIN user customer ON o.customer_id = customer.id
         LEFT JOIN user runner ON o.runner_id = runner.id
@@ -141,7 +153,11 @@
         SELECT
             o.id, o.order_no, o.title, o.amount, o.status, o.pickup_code, o.create_time, o.update_time,
             customer.name AS customer_name,
-            runner.name AS runner_name
+            runner.name AS runner_name,
+            customer.student_id AS customer_student_id,
+            runner.student_id AS runner_student_id,
+            customer.phone AS customer_phone,
+            runner.phone AS runner_phone
         FROM orders o
         LEFT JOIN user customer ON o.customer_id = customer.id
         LEFT JOIN user runner ON o.runner_id = runner.id
@@ -154,7 +170,11 @@
         SELECT
             o.id, o.order_no, o.title, o.amount, o.status, o.pickup_code, o.create_time, o.update_time,
             customer.name AS customer_name,
-            runner.name AS runner_name
+            runner.name AS runner_name,
+            customer.student_id AS customer_student_id,
+            runner.student_id AS runner_student_id,
+            customer.phone AS customer_phone,
+            runner.phone AS runner_phone
         FROM orders o
         LEFT JOIN user customer ON o.customer_id = customer.id
         LEFT JOIN user runner ON o.runner_id = runner.id

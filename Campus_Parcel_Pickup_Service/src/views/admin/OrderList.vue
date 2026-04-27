@@ -67,8 +67,10 @@
       </el-table-column>
       <el-table-column prop="customerName" label="发布者" width="120" />
       <el-table-column prop="customerStudentId" label="发布者学号" width="140" />
+      <el-table-column prop="customerPhone" label="发布者手机号" width="140" />
       <el-table-column prop="runnerName" label="跑腿员" width="120" />
       <el-table-column prop="runnerStudentId" label="跑腿员学号" width="140" />
+      <el-table-column prop="runnerPhone" label="跑腿员手机号" width="140" />
       <el-table-column label="操作" width="100" fixed="right">
         <template #default="{ row }">
           <el-button type="primary" link @click="handleViewDetail(row)">
@@ -121,8 +123,20 @@
           <el-descriptions-item label="发布者">
             {{ detailDialog.data.customerName || '-' }}
           </el-descriptions-item>
+          <el-descriptions-item label="发布者学号">
+            {{ detailDialog.data.customerStudentId || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="发布者手机号">
+            {{ detailDialog.data.customerPhone || '-' }}
+          </el-descriptions-item>
           <el-descriptions-item label="跑腿员">
             {{ detailDialog.data.runnerName || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="跑腿员学号(脱敏)">
+            {{ detailDialog.data.runnerStudentId || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="跑腿员手机号(脱敏)">
+            {{ detailDialog.data.runnerPhone || '-' }}
           </el-descriptions-item>
         </el-descriptions>
 

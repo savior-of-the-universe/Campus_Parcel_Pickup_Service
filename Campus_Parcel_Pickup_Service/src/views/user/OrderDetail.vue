@@ -16,6 +16,7 @@
         <el-descriptions-item label="发布时间">{{ formatDate(detail.createTime) }}</el-descriptions-item>
         <el-descriptions-item label="更新时间">{{ formatDate(detail.updateTime) }}</el-descriptions-item>
         <el-descriptions-item label="跑腿员">{{ detail.runnerName || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="跑腿员手机号">{{ detail.runnerPhone || '-' }}</el-descriptions-item>
       </el-descriptions>
     </el-card>
 
