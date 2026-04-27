@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.team.admin.mapper.OrderMapper">
+
+    <!-- 订单列表查询结果映射 -->
+    <resultMap id="OrderListDTOMap" type="com.team.admin.dto.OrderListDTO">
+        <id column="id" property="id"/>
+        <result column="order_no" property="orderNo"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+        <result column="customer_name" property="customerName"/>
+        <result column="runner_name" property="runnerName"/>
+    </resultMap>
+
+    <!-- 订单详情查询结果映射 -->
+    <resultMap id="OrderDetailDTOMap" type="com.team.admin.dto.OrderDetailDTO">
+        <id column="id" property="id"/>
+        <result column="order_no" property="orderNo"/>
+        <result column="status" property="status"/>
+        <result column="pickup_code" property="pickupCode"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="customer_name" property="customerName"/>
+        <result column="runner_name" property="runnerName"/>
+    </resultMap>
+
+    <!-- 时间线事件结果映射 -->
+    <resultMap id="TimelineEventMap" type="com.team.admin.dto.OrderDetailDTO$TimelineEvent">
+        <result column="event" property="event"/>
+        <result column="description" property="description"/>
+        <result column="timestamp" property="timestamp"/>
+    </resultMap>
+
+    <!-- 分页查询订单列表（包含用户姓名） -->
+    <select id="selectOrderListWithNames" resultMap="OrderListDTOMap">
+        SELECT 
+            o.id, o.order_no, o.status, o.create_time,
+            customer.name AS customer_name,
+            runner.name AS runner_name
+        FROM orders o
+        LEFT JOIN user customer ON o.customer_id = customer.id
+        LEFT JOIN user runner ON o.runner_id = runner.id
+        <where>
+            <if test="status != null and status != ''">
+                AND o.status = #{status}
+            </if>
+            <if test="runnerName != null and runnerName != ''">
+                AND runner.name LIKE CONCAT('%', #{runnerName}, '%')
+            </if>
+            <if test="customerName != null and customerName != ''">
+                AND customer.name LIKE CONCAT('%', #{customerName}, '%')
+            </if>
+        </where>
+        ORDER BY o.create_time DESC
+    </select>
+
+    <!-- 根据订单ID查询订单详情（包含用户姓名和时间线） -->
+    <select id="selectOrderDetailById" resultMap="OrderDetailDTOMap">
+        SELECT 
+            o.id, o.order_no, o.status, o.pickup_code, o.create_time, o.update_time,
+            customer.name AS customer_name,
+            runner.name AS runner_name
+        FROM orders o
+        LEFT JOIN user customer ON o.customer_id = customer.id
+        LEFT JOIN user runner ON o.runner_id = runner.id
+        WHERE o.id = #{orderId}
+    </select>
+
+</mapper>
