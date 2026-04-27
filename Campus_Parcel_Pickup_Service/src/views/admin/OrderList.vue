@@ -10,7 +10,24 @@
             <el-option label="接单中" value="ACCEPTED" />
             <el-option label="途中" value="IN_TRANSIT" />
             <el-option label="已完成" value="COMPLETED" />
+            <el-option label="已取消" value="CANCELLED" />
           </el-select>
+        </el-form-item>
+        <el-form-item label="订单号">
+          <el-input
+            v-model="searchForm.orderNo"
+            placeholder="订单号模糊匹配"
+            clearable
+            @keyup.enter="handleSearch"
+          />
+        </el-form-item>
+        <el-form-item label="学号">
+          <el-input
+            v-model="searchForm.studentId"
+            placeholder="客户学号模糊匹配"
+            clearable
+            @keyup.enter="handleSearch"
+          />
         </el-form-item>
         <el-form-item label="姓名">
           <el-input
@@ -25,6 +42,7 @@
           <el-button @click="handleReset">重置</el-button>
         </el-form-item>
       </el-form>
+
     </div>
 
     <!-- 订单表格 -->
@@ -48,7 +66,9 @@
         </template>
       </el-table-column>
       <el-table-column prop="customerName" label="发布者" width="120" />
+      <el-table-column prop="customerStudentId" label="发布者学号" width="140" />
       <el-table-column prop="runnerName" label="跑腿员" width="120" />
+      <el-table-column prop="runnerStudentId" label="跑腿员学号" width="140" />
       <el-table-column label="操作" width="100" fixed="right">
         <template #default="{ row }">
           <el-button type="primary" link @click="handleViewDetail(row)">
@@ -56,6 +76,7 @@
           </el-button>
         </template>
       </el-table-column>
+
     </el-table>
 
     <!-- 分页 -->
@@ -136,8 +157,11 @@ const orderList = ref([])
 // 搜索表单
 const searchForm = reactive({
   status: '',
-  name: ''
+  name: '',
+  orderNo: '',
+  studentId: ''
 })
+
 
 // 分页数据
 const pagination = reactive({
@@ -158,20 +182,26 @@ const getOrderList = async () => {
   try {
     const params = {
       page: pagination.page,
-      size: pagination.size
+      size: pagination.size,
+      sort: 'DESC'
     }
-    
+
     if (searchForm.status) {
       params.status = searchForm.status
     }
-    
+    if (searchForm.orderNo) {
+      params.orderNo = searchForm.orderNo
+    }
+    if (searchForm.studentId) {
+      params.studentId = searchForm.studentId
+    }
     if (searchForm.name) {
-      // 需要判断是跑腿员还是客户姓名，后端会同时搜索两个字段
+      // 同时用于跑腿员和客户姓名模糊搜索
       params.runnerName = searchForm.name
       params.customerName = searchForm.name
     }
     
-    const response = await request.get('/api/admin/orders', params)
+    const response = await request.get('/api/cs/orders', { params })
 
     
     if (response.data.code === 200) {
@@ -180,6 +210,7 @@ const getOrderList = async () => {
     } else {
       ElMessage.error(response.data.message || '获取订单列表失败')
     }
+
   } catch (error) {
     console.error('获取订单列表失败:', error)
     ElMessage.error('获取订单列表失败')
@@ -191,7 +222,8 @@ const getOrderList = async () => {
 // 获取订单详情
 const getOrderDetail = async (id) => {
   try {
-    const response = await request.get(`/api/admin/orders/${id}`)
+    const response = await request.get(`/api/cs/orders/${id}`)
+
 
     
     if (response.data.code === 200) {
@@ -216,9 +248,12 @@ const handleSearch = () => {
 const handleReset = () => {
   searchForm.status = ''
   searchForm.name = ''
+  searchForm.orderNo = ''
+  searchForm.studentId = ''
   pagination.page = 1
   getOrderList()
 }
+
 
 // 查看详情
 const handleViewDetail = (row) => {

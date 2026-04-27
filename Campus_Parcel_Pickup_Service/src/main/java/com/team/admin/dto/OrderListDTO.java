@@ -15,13 +15,15 @@ public class OrderListDTO {
     private LocalDateTime createTime; // 创建时间
     private String customerName;    // 客户姓名
     private String runnerName;      // 跑腿员姓名
+    private String customerStudentId; // 客户学号
+    private String runnerStudentId;   // 跑腿员学号
 
     // 无参构造器
     public OrderListDTO() {
     }
 
     // 全参构造器
-    public OrderListDTO(Long id, String orderNo, String title, BigDecimal amount, String status, LocalDateTime createTime, String customerName, String runnerName) {
+    public OrderListDTO(Long id, String orderNo, String title, BigDecimal amount, String status, LocalDateTime createTime, String customerName, String runnerName, String customerStudentId, String runnerStudentId) {
         this.id = id;
         this.orderNo = orderNo;
         this.title = title;
@@ -30,7 +32,10 @@ public class OrderListDTO {
         this.createTime = createTime;
         this.customerName = customerName;
         this.runnerName = runnerName;
+        this.customerStudentId = customerStudentId;
+        this.runnerStudentId = runnerStudentId;
     }
+
 
     // Getter和Setter方法
     public Long getId() {
@@ -97,6 +102,22 @@ public class OrderListDTO {
         this.runnerName = runnerName;
     }
 
+    public String getCustomerStudentId() {
+        return customerStudentId;
+    }
+
+    public void setCustomerStudentId(String customerStudentId) {
+        this.customerStudentId = customerStudentId;
+    }
+
+    public String getRunnerStudentId() {
+        return runnerStudentId;
+    }
+
+    public void setRunnerStudentId(String runnerStudentId) {
+        this.runnerStudentId = runnerStudentId;
+    }
+
     @Override
     public String toString() {
         return "OrderListDTO{" +
@@ -108,7 +129,10 @@ public class OrderListDTO {
                 ", createTime=" + createTime +
                 ", customerName='" + customerName + '\'' +
                 ", runnerName='" + runnerName + '\'' +
+                ", customerStudentId='" + customerStudentId + '\'' +
+                ", runnerStudentId='" + runnerStudentId + '\'' +
                 '}';
     }
 }
+
 

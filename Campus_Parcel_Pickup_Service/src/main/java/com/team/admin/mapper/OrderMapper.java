@@ -28,7 +28,10 @@ public interface OrderMapper extends BaseMapper<Order> {
     IPage<OrderListDTO> selectOrderListWithNames(Page<OrderListDTO> page, 
                                                 @Param("status") String status,
                                                 @Param("runnerName") String runnerName,
-                                                @Param("customerName") String customerName);
+                                                @Param("customerName") String customerName,
+                                                @Param("orderNo") String orderNo,
+                                                @Param("studentId") String studentId,
+                                                @Param("sort") String sort);
     
     /**
      * 用户端：分页查询当前客户的订单列表
@@ -37,6 +40,14 @@ public interface OrderMapper extends BaseMapper<Order> {
                                                      @Param("customerId") Long customerId,
                                                      @Param("status") String status,
                                                      @Param("sort") String sort);
+
+    /**
+     * 跑腿端：分页查询当前跑腿员的订单列表
+     */
+    IPage<CustomerOrderListDTO> selectRunnerOrders(Page<CustomerOrderListDTO> page,
+                                                   @Param("runnerId") Long runnerId,
+                                                   @Param("status") String status,
+                                                   @Param("sort") String sort);
     
     /**
      * 根据订单ID查询订单详情（包含用户姓名和时间线）
@@ -50,5 +61,12 @@ public interface OrderMapper extends BaseMapper<Order> {
      */
     OrderDetailDTO selectOrderDetailByIdAndCustomer(@Param("orderId") Long orderId,
                                                     @Param("customerId") Long customerId);
+
+    /**
+     * 跑腿端：根据订单ID与跑腿员ID查询订单详情
+     */
+    OrderDetailDTO selectOrderDetailByIdAndRunner(@Param("orderId") Long orderId,
+                                                  @Param("runnerId") Long runnerId);
 }
+
 

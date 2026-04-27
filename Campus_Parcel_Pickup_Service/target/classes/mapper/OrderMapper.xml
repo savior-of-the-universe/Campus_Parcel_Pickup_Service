@@ -12,7 +12,10 @@
         <result column="create_time" property="createTime"/>
         <result column="customer_name" property="customerName"/>
         <result column="runner_name" property="runnerName"/>
+        <result column="customer_student_id" property="customerStudentId"/>
+        <result column="runner_student_id" property="runnerStudentId"/>
     </resultMap>
+
 
 
     <!-- 订单详情查询结果映射 -->
@@ -51,9 +54,10 @@
         SELECT 
             o.id, o.order_no, o.title, o.amount, o.status, o.create_time,
             customer.name AS customer_name,
-            runner.name AS runner_name
+            runner.name AS runner_name,
+            customer.student_id AS customer_student_id,
+            runner.student_id AS runner_student_id
         FROM orders o
-
         LEFT JOIN user customer ON o.customer_id = customer.id
         LEFT JOIN user runner ON o.runner_id = runner.id
         <where>
@@ -66,9 +70,19 @@
             <if test="customerName != null and customerName != ''">
                 AND customer.name LIKE CONCAT('%', #{customerName}, '%')
             </if>
+            <if test="orderNo != null and orderNo != ''">
+                AND o.order_no LIKE CONCAT('%', #{orderNo}, '%')
+            </if>
+            <if test="studentId != null and studentId != ''">
+                AND customer.student_id LIKE CONCAT('%', #{studentId}, '%')
+            </if>
         </where>
-        ORDER BY o.create_time DESC
+        <choose>
+            <when test="sort == 'ASC'">ORDER BY o.create_time ASC</when>
+            <otherwise>ORDER BY o.create_time DESC</otherwise>
+        </choose>
     </select>
+
 
     <!-- 根据订单ID查询订单详情（包含用户姓名和时间线） -->
     <select id="selectOrderDetailById" resultMap="OrderDetailDTOMap">
@@ -102,6 +116,26 @@
         </choose>
     </select>
 
+    <!-- 跑腿端：分页查询当前跑腿员的订单列表 -->
+    <select id="selectRunnerOrders" resultMap="CustomerOrderListDTOMap">
+        SELECT
+            o.id,
+            o.order_no,
+            o.title,
+            o.amount,
+            o.status,
+            o.create_time
+        FROM orders o
+        WHERE o.runner_id = #{runnerId}
+        <if test="status != null and status != ''">
+            AND o.status = #{status}
+        </if>
+        <choose>
+            <when test="sort == 'ASC'">ORDER BY o.create_time ASC</when>
+            <otherwise>ORDER BY o.create_time DESC</otherwise>
+        </choose>
+    </select>
+
     <!-- 用户端：根据订单ID与客户ID查询订单详情 -->
     <select id="selectOrderDetailByIdAndCustomer" resultMap="OrderDetailDTOMap">
         SELECT
@@ -115,5 +149,19 @@
           AND o.customer_id = #{customerId}
     </select>
 
+    <!-- 跑腿端：根据订单ID与跑腿员ID查询订单详情 -->
+    <select id="selectOrderDetailByIdAndRunner" resultMap="OrderDetailDTOMap">
+        SELECT
+            o.id, o.order_no, o.title, o.amount, o.status, o.pickup_code, o.create_time, o.update_time,
+            customer.name AS customer_name,
+            runner.name AS runner_name
+        FROM orders o
+        LEFT JOIN user customer ON o.customer_id = customer.id
+        LEFT JOIN user runner ON o.runner_id = runner.id
+        WHERE o.id = #{orderId}
+          AND o.runner_id = #{runnerId}
+    </select>
+
 </mapper>
+
 

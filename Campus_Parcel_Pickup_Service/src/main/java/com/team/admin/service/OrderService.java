@@ -37,6 +37,16 @@ public interface OrderService {
      * 客户端：查询当前客户的订单详情
      */
     OrderDetailDTO getCustomerOrderDetail(Long id, Long customerId);
+
+    /**
+     * 跑腿端：分页查询当前跑腿员的订单列表
+     */
+    IPage<CustomerOrderListDTO> getRunnerOrders(Long runnerId, CustomerOrderSearchRequest searchRequest);
+
+    /**
+     * 跑腿端：查询当前跑腿员的订单详情
+     */
+    OrderDetailDTO getRunnerOrderDetail(Long id, Long runnerId);
     
     /**
      * 根据订单号查询订单
@@ -46,6 +56,7 @@ public interface OrderService {
     Order getOrderByOrderNo(String orderNo);
 
     
+
     /**
      * 创建订单
      * @param order 订单信息

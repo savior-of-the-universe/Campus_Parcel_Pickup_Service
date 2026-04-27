@@ -38,10 +38,17 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public IPage<OrderListDTO> getOrderList(OrderSearchRequest searchRequest) {
         Page<OrderListDTO> page = new Page<>(searchRequest.getPage(), searchRequest.getSize());
+        String sort = "DESC";
+        if (StringUtils.hasText(searchRequest.getSort()) && "ASC".equalsIgnoreCase(searchRequest.getSort())) {
+            sort = "ASC";
+        }
         return orderMapper.selectOrderListWithNames(page,
                 searchRequest.getStatus(),
                 searchRequest.getRunnerName(),
-                searchRequest.getCustomerName());
+                searchRequest.getCustomerName(),
+                searchRequest.getOrderNo(),
+                searchRequest.getStudentId(),
+                sort);
     }
 
     @Override
@@ -53,7 +60,18 @@ public class OrderServiceImpl implements OrderService {
         }
         return orderMapper.selectCustomerOrders(page, customerId, searchRequest.getStatus(), sort);
     }
+
+    @Override
+    public IPage<CustomerOrderListDTO> getRunnerOrders(Long runnerId, CustomerOrderSearchRequest searchRequest) {
+        Page<CustomerOrderListDTO> page = new Page<>(searchRequest.getPage(), searchRequest.getSize());
+        String sort = "DESC";
+        if (StringUtils.hasText(searchRequest.getSort()) && "ASC".equalsIgnoreCase(searchRequest.getSort())) {
+            sort = "ASC";
+        }
+        return orderMapper.selectRunnerOrders(page, runnerId, searchRequest.getStatus(), sort);
+    }
     
+
     @Override
     public OrderDetailDTO getOrderDetail(Long id) {
         return orderMapper.selectOrderDetailById(id);
@@ -71,7 +89,21 @@ public class OrderServiceImpl implements OrderService {
         }
         return detail;
     }
+
+    @Override
+    public OrderDetailDTO getRunnerOrderDetail(Long id, Long runnerId) {
+        OrderDetailDTO detail = orderMapper.selectOrderDetailByIdAndRunner(id, runnerId);
+        if (detail == null) {
+            return null;
+        }
+        Order order = orderMapper.selectById(id);
+        if (order != null) {
+            detail.setTimeline(parseTimeline(order.getTimeline()));
+        }
+        return detail;
+    }
     
+
     @Override
     public Order getOrderByOrderNo(String orderNo) {
         QueryWrapper<Order> queryWrapper = new QueryWrapper<>();

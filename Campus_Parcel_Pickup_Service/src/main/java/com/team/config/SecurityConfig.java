@@ -61,11 +61,16 @@ public class SecurityConfig {
                 .requestMatchers("/static/**", "/public/**", "/assets/**").permitAll()
                 // 允许WebSocket连接
                 .requestMatchers("/ws/**").permitAll()
+                // 客服接口允许CS或ADMIN
+                .requestMatchers("/api/cs/**").hasAnyRole("CS", "ADMIN")
+                // 跑腿端接口需要RUNNER
+                .requestMatchers("/api/runner/**").hasRole("RUNNER")
                 // 管理员接口需要ADMIN角色
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 // 其他所有接口都需要认证
                 .anyRequest().authenticated()
             )
+
             // 添加JWT过滤器
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             // 配置异常处理

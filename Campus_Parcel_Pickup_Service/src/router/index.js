@@ -62,6 +62,17 @@ const routes = [
     }
   },
   {
+    path: '/cs/orders',
+    name: 'CSOrderList',
+    component: OrderList,
+    meta: {
+      title: '客服订单管理',
+      requiresAuth: true,
+      roles: ['ADMIN', 'CS']
+    }
+  },
+
+  {
     path: '/admin/chat',
     name: 'ChatCenter',
     component: ChatCenter,
@@ -91,9 +102,30 @@ const routes = [
       roles: ['USER']
     }
   },
+  {
+    path: '/runner/orders',
+    name: 'RunnerOrders',
+    component: () => import('@/views/runner/OrderList.vue'),
+    meta: {
+      title: '我的接单',
+      requiresAuth: true,
+      roles: ['RUNNER']
+    }
+  },
+  {
+    path: '/runner/orders/:id',
+    name: 'RunnerOrderDetail',
+    component: () => import('@/views/runner/OrderDetail.vue'),
+    meta: {
+      title: '接单详情',
+      requiresAuth: true,
+      roles: ['RUNNER']
+    }
+  },
 
   {
     path: '/user/tasks',
+
     name: 'UserTasks',
     component: () => import('@/views/user/TaskList.vue'),
     meta: {

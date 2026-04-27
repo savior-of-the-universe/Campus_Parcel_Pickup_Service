@@ -47,8 +47,17 @@
         </el-sub-menu>
       </template>
       
+      <!-- 客服菜单 -->
+      <template v-if="userStore.isCs && !userStore.isAdmin">
+        <el-menu-item index="/cs/orders">
+          <el-icon><Document /></el-icon>
+          <span>订单管理</span>
+        </el-menu-item>
+      </template>
+      
       <!-- 普通用户菜单 -->
       <template v-if="userStore.isUser || userStore.isRunner">
+
         <el-menu-item index="/dashboard">
           <el-icon><House /></el-icon>
           <span>个人中心</span>
@@ -78,6 +87,11 @@
       
       <!-- 跑腿员专属菜单 -->
       <template v-if="userStore.isRunner">
+        <el-menu-item index="/runner/orders">
+          <el-icon><Document /></el-icon>
+          <span>我的接单</span>
+        </el-menu-item>
+
         <el-menu-item index="/runner/tasks">
           <el-icon><Van /></el-icon>
           <span>任务大厅</span>
@@ -88,6 +102,7 @@
           <span>配送管理</span>
         </el-menu-item>
       </template>
+
     </el-menu>
   </div>
 </template>

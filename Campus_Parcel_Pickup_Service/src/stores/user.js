@@ -14,6 +14,8 @@ export const useUserStore = defineStore('user', () => {
   const isAdmin = computed(() => userRole.value === 'ADMIN')
   const isUser = computed(() => userRole.value === 'USER')
   const isRunner = computed(() => userRole.value === 'RUNNER')
+  const isCs = computed(() => userRole.value === 'CS')
+
 
   // 设置认证信息
   const setAuth = (authToken, user) => {
@@ -152,8 +154,10 @@ export const useUserStore = defineStore('user', () => {
     isAdmin,
     isUser,
     isRunner,
+    isCs,
     
     // 方法
+
     setAuth,
     clearAuth,
     login,
