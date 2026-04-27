@@ -3,6 +3,7 @@ package com.team.admin.entity;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -13,6 +14,8 @@ public class Order {
     @TableId(type = IdType.AUTO)
     private Long id;                // 订单ID
     private String orderNo;         // 订单号
+    private String title;           // 订单标题
+    private BigDecimal amount;      // 订单金额
     private Long customerId;        // 客户ID
     private Long runnerId;          // 跑腿员ID
     private String status;          // 订单状态：PENDING, ACCEPTED, IN_TRANSIT, COMPLETED, CANCELLED
@@ -26,9 +29,11 @@ public class Order {
     }
 
     // 全参构造器
-    public Order(Long id, String orderNo, Long customerId, Long runnerId, String status, String pickupCode, String timeline, LocalDateTime createTime, LocalDateTime updateTime) {
+    public Order(Long id, String orderNo, String title, BigDecimal amount, Long customerId, Long runnerId, String status, String pickupCode, String timeline, LocalDateTime createTime, LocalDateTime updateTime) {
         this.id = id;
         this.orderNo = orderNo;
+        this.title = title;
+        this.amount = amount;
         this.customerId = customerId;
         this.runnerId = runnerId;
         this.status = status;
@@ -53,6 +58,22 @@ public class Order {
 
     public void setOrderNo(String orderNo) {
         this.orderNo = orderNo;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
     }
 
     public Long getCustomerId() {
@@ -116,6 +137,8 @@ public class Order {
         return "Order{" +
                 "id=" + id +
                 ", orderNo='" + orderNo + '\'' +
+                ", title='" + title + '\'' +
+                ", amount=" + amount +
                 ", customerId=" + customerId +
                 ", runnerId=" + runnerId +
                 ", status='" + status + '\'' +
@@ -126,3 +149,4 @@ public class Order {
                 '}';
     }
 }
+

@@ -78,9 +78,20 @@ const routes = [
     meta: {
       title: '我的订单',
       requiresAuth: true,
-      roles: ['USER', 'RUNNER']
+      roles: ['USER']
     }
   },
+  {
+    path: '/user/orders/:id',
+    name: 'UserOrderDetail',
+    component: () => import('@/views/user/OrderDetail.vue'),
+    meta: {
+      title: '订单详情',
+      requiresAuth: true,
+      roles: ['USER']
+    }
+  },
+
   {
     path: '/user/tasks',
     name: 'UserTasks',

@@ -1,38 +1,31 @@
-package com.team.admin.dto;
+package com.team.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * 订单列表DTO（包含用户姓名）
+ * 客户端订单列表 DTO（仅当前用户）
  */
-public class OrderListDTO {
-    private Long id;                // 订单ID
-    private String orderNo;         // 订单号
-    private String title;           // 订单标题
-    private BigDecimal amount;      // 订单金额
-    private String status;          // 订单状态
-    private LocalDateTime createTime; // 创建时间
-    private String customerName;    // 客户姓名
-    private String runnerName;      // 跑腿员姓名
+public class CustomerOrderListDTO {
+    private Long id;
+    private String orderNo;
+    private String title;
+    private BigDecimal amount;
+    private String status;
+    private LocalDateTime createTime;
 
-    // 无参构造器
-    public OrderListDTO() {
+    public CustomerOrderListDTO() {
     }
 
-    // 全参构造器
-    public OrderListDTO(Long id, String orderNo, String title, BigDecimal amount, String status, LocalDateTime createTime, String customerName, String runnerName) {
+    public CustomerOrderListDTO(Long id, String orderNo, String title, BigDecimal amount, String status, LocalDateTime createTime) {
         this.id = id;
         this.orderNo = orderNo;
         this.title = title;
         this.amount = amount;
         this.status = status;
         this.createTime = createTime;
-        this.customerName = customerName;
-        this.runnerName = runnerName;
     }
 
-    // Getter和Setter方法
     public Long getId() {
         return id;
     }
@@ -81,34 +74,15 @@ public class OrderListDTO {
         this.createTime = createTime;
     }
 
-    public String getCustomerName() {
-        return customerName;
-    }
-
-    public void setCustomerName(String customerName) {
-        this.customerName = customerName;
-    }
-
-    public String getRunnerName() {
-        return runnerName;
-    }
-
-    public void setRunnerName(String runnerName) {
-        this.runnerName = runnerName;
-    }
-
     @Override
     public String toString() {
-        return "OrderListDTO{" +
+        return "CustomerOrderListDTO{" +
                 "id=" + id +
                 ", orderNo='" + orderNo + '\'' +
                 ", title='" + title + '\'' +
                 ", amount=" + amount +
                 ", status='" + status + '\'' +
                 ", createTime=" + createTime +
-                ", customerName='" + customerName + '\'' +
-                ", runnerName='" + runnerName + '\'' +
                 '}';
     }
 }
-

@@ -54,12 +54,13 @@
           <span>个人中心</span>
         </el-menu-item>
         
-        <el-menu-item index="/user/orders">
+        <el-menu-item v-if="userStore.isUser" index="/user/orders">
           <el-icon><Document /></el-icon>
           <span>我的订单</span>
         </el-menu-item>
         
         <el-menu-item index="/user/tasks">
+
           <el-icon><List /></el-icon>
           <span>发布任务</span>
         </el-menu-item>

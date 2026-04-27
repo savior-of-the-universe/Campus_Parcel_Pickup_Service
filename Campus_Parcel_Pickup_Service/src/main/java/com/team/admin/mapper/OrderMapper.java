@@ -6,8 +6,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.team.admin.dto.OrderDetailDTO;
 import com.team.admin.dto.OrderListDTO;
 import com.team.admin.entity.Order;
+import com.team.dto.CustomerOrderListDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+
 
 /**
  * 订单Mapper接口
@@ -29,9 +31,24 @@ public interface OrderMapper extends BaseMapper<Order> {
                                                 @Param("customerName") String customerName);
     
     /**
+     * 用户端：分页查询当前客户的订单列表
+     */
+    IPage<CustomerOrderListDTO> selectCustomerOrders(Page<CustomerOrderListDTO> page,
+                                                     @Param("customerId") Long customerId,
+                                                     @Param("status") String status,
+                                                     @Param("sort") String sort);
+    
+    /**
      * 根据订单ID查询订单详情（包含用户姓名和时间线）
      * @param orderId 订单ID
      * @return 订单详情
      */
     OrderDetailDTO selectOrderDetailById(@Param("orderId") Long orderId);
+
+    /**
+     * 用户端：根据订单ID与客户ID查询订单详情
+     */
+    OrderDetailDTO selectOrderDetailByIdAndCustomer(@Param("orderId") Long orderId,
+                                                    @Param("customerId") Long customerId);
 }
+

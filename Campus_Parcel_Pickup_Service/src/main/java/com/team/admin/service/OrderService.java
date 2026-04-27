@@ -5,6 +5,9 @@ import com.team.admin.dto.OrderDetailDTO;
 import com.team.admin.dto.OrderListDTO;
 import com.team.admin.dto.OrderSearchRequest;
 import com.team.admin.entity.Order;
+import com.team.dto.CustomerOrderListDTO;
+import com.team.dto.CustomerOrderSearchRequest;
+
 
 /**
  * 订单服务接口
@@ -17,6 +20,11 @@ public interface OrderService {
      * @return 分页结果
      */
     IPage<OrderListDTO> getOrderList(OrderSearchRequest searchRequest);
+
+    /**
+     * 客户端：分页查询当前客户的订单列表
+     */
+    IPage<CustomerOrderListDTO> getCustomerOrders(Long customerId, CustomerOrderSearchRequest searchRequest);
     
     /**
      * 根据ID查询订单详情
@@ -24,6 +32,11 @@ public interface OrderService {
      * @return 订单详情
      */
     OrderDetailDTO getOrderDetail(Long id);
+
+    /**
+     * 客户端：查询当前客户的订单详情
+     */
+    OrderDetailDTO getCustomerOrderDetail(Long id, Long customerId);
     
     /**
      * 根据订单号查询订单
@@ -31,6 +44,7 @@ public interface OrderService {
      * @return 订单信息
      */
     Order getOrderByOrderNo(String orderNo);
+
     
     /**
      * 创建订单

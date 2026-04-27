@@ -1,5 +1,6 @@
 package com.team.admin.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -9,6 +10,8 @@ import java.util.List;
 public class OrderDetailDTO {
     private Long id;                        // 订单ID
     private String orderNo;                 // 订单号
+    private String title;                   // 订单标题
+    private BigDecimal amount;              // 订单金额
     private String status;                  // 订单状态
     private String pickupCode;              // 取件码
     private LocalDateTime createTime;       // 创建时间
@@ -22,9 +25,11 @@ public class OrderDetailDTO {
     }
 
     // 全参构造器
-    public OrderDetailDTO(Long id, String orderNo, String status, String pickupCode, LocalDateTime createTime, LocalDateTime updateTime, String customerName, String runnerName, List<TimelineEvent> timeline) {
+    public OrderDetailDTO(Long id, String orderNo, String title, BigDecimal amount, String status, String pickupCode, LocalDateTime createTime, LocalDateTime updateTime, String customerName, String runnerName, List<TimelineEvent> timeline) {
         this.id = id;
         this.orderNo = orderNo;
+        this.title = title;
+        this.amount = amount;
         this.status = status;
         this.pickupCode = pickupCode;
         this.createTime = createTime;
@@ -49,6 +54,22 @@ public class OrderDetailDTO {
 
     public void setOrderNo(String orderNo) {
         this.orderNo = orderNo;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
     }
 
     public String getStatus() {
@@ -166,6 +187,8 @@ public class OrderDetailDTO {
         return "OrderDetailDTO{" +
                 "id=" + id +
                 ", orderNo='" + orderNo + '\'' +
+                ", title='" + title + '\'' +
+                ", amount=" + amount +
                 ", status='" + status + '\'' +
                 ", pickupCode='" + pickupCode + '\'' +
                 ", createTime=" + createTime +
@@ -176,3 +199,4 @@ public class OrderDetailDTO {
                 '}';
     }
 }
+
