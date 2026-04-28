@@ -11,6 +11,24 @@
       </div>
     </div>
 
+    <!-- 待接单筛选栏 -->
+    <div v-if="activeTab === 'available'" class="filter-bar">
+      <el-input
+        v-model="filterDeliveryPoint"
+        placeholder="按快递点筛选"
+        clearable
+        style="width: 200px"
+        @clear="doSearch"
+        @keyup.enter="doSearch"
+      >
+        <template #prefix><el-icon><Search /></el-icon></template>
+      </el-input>
+      <el-checkbox v-model="sortByPoints" @change="doSearch" style="margin-left: 12px">
+        按积分排序
+      </el-checkbox>
+      <el-button type="primary" plain size="small" style="margin-left: 8px" @click="doSearch">搜索</el-button>
+    </div>
+
     <div v-loading="loading" class="task-grid">
       <el-card
         v-for="task in taskList"
@@ -23,13 +41,18 @@
           <el-tag :type="statusType(task.status)" size="small">{{ statusText(task.status) }}</el-tag>
           <span class="reward">+{{ task.rewardPoints }} 积分</span>
         </div>
-        <div class="code">取件码：<strong>{{ task.pickupCode }}</strong></div>
+        <!-- 待接单显示后四位，进行中/已完成显示完整 -->
+        <div class="code">
+          取件码：
+          <strong v-if="activeTab === 'available'">{{ task.pickupCodeMasked || '****' }}</strong>
+          <strong v-else>{{ task.pickupCode }}</strong>
+        </div>
         <div class="point">送达：{{ task.deliveryPoint }}</div>
         <div class="meta">
-          <span v-if="task.weight">重量：{{ task.weight }} kg</span>
+          <span v-if="task.weight">{{ task.weight }} kg</span>
           <span class="time">{{ formatDate(task.createTime) }}</span>
         </div>
-        <div v-if="task.remark" class="remark">备注：{{ task.remark }}</div>
+        <div v-if="task.remark" class="remark">{{ task.remark }}</div>
       </el-card>
     </div>
 
@@ -51,23 +74,43 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { Search } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 
 const router = useRouter()
+const route = useRoute()
 const loading = ref(false)
 const taskList = ref([])
 const activeTab = ref('available')
+const filterDeliveryPoint = ref('')
+const sortByPoints = ref(false)
 
 const pagination = reactive({ page: 1, size: 10, total: 0 })
 
 const fetchTasks = async () => {
   loading.value = true
   try {
-    const { data: res } = await request.get('/api/runner/tasks', {
-      params: { statusGroup: activeTab.value, page: pagination.page, size: pagination.size }
-    })
+    let res
+    if (activeTab.value === 'available') {
+      // 使用专用待接单列表接口
+      const resp = await request.get('/api/runner/tasks/available', {
+        params: {
+          deliveryPoint: filterDeliveryPoint.value || undefined,
+          sortByPoints: sortByPoints.value || undefined,
+          page: pagination.page,
+          size: pagination.size
+        }
+      })
+      res = resp.data
+    } else {
+      const resp = await request.get('/api/runner/tasks', {
+        params: { statusGroup: activeTab.value, page: pagination.page, size: pagination.size }
+      })
+      res = resp.data
+    }
+
     if (res?.code === 200 && res.data) {
       taskList.value = res.data.records || []
       pagination.total = res.data.total || 0
@@ -81,8 +124,15 @@ const fetchTasks = async () => {
   }
 }
 
+const doSearch = () => {
+  pagination.page = 1
+  fetchTasks()
+}
+
 const handleTabChange = () => {
   pagination.page = 1
+  filterDeliveryPoint.value = ''
+  sortByPoints.value = false
   fetchTasks()
 }
 
@@ -99,13 +149,20 @@ const formatDate = (v) => {
   return new Date(v).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
 
-onMounted(fetchTasks)
+onMounted(() => {
+  // 支持接单成功后跳转过来时自动切到"进行中"
+  if (route.query.tab) {
+    activeTab.value = route.query.tab
+  }
+  fetchTasks()
+})
 </script>
 
 <style scoped>
 .runner-task-list { padding: 20px; background: #fff; min-height: calc(100vh - 120px); }
-.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .header h2 { margin: 0; }
+.filter-bar { display: flex; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
 .task-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
 .task-card { cursor: pointer; border-radius: 8px; }
 .task-card:hover { transform: translateY(-2px); transition: transform .2s; }

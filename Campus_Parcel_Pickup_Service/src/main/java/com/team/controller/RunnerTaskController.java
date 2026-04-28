@@ -12,6 +12,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -78,6 +79,40 @@ public class RunnerTaskController {
         try {
             TaskDTO dto = taskService.updateTaskStatus(taskId, runnerId, request);
             return Result.success("状态更新成功", dto);
+        } catch (IllegalArgumentException | IllegalStateException ex) {
+            return Result.error(ex.getMessage());
+        }
+    }
+
+    /**
+     * 待接单任务大厅（无需登录身份，仅需RUNNER角色）
+     * GET /api/runner/tasks/available
+     * @param deliveryPoint 快递点关键字筛选（可选）
+     * @param sortByPoints  true=按积分倒序（可选，默认按时间）
+     */
+    @GetMapping("/available")
+    public Result<PageResult<TaskDTO>> available(
+            @RequestParam(value = "deliveryPoint", required = false) String deliveryPoint,
+            @RequestParam(value = "sortByPoints", required = false) Boolean sortByPoints,
+            @RequestParam(value = "page", defaultValue = "1") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size) {
+        PageResult<TaskDTO> result = taskService.getAvailableTasks(deliveryPoint, sortByPoints, page, size);
+        return Result.success(result);
+    }
+
+    /**
+     * 接单（乐观锁防并发）
+     * POST /api/runner/tasks/{taskId}/accept
+     */
+    @PostMapping("/{taskId}/accept")
+    public Result<TaskDTO> accept(@PathVariable Long taskId) {
+        Long runnerId = getCurrentUserId();
+        if (runnerId == null) {
+            return Result.error(401, "未登录或用户信息缺失");
+        }
+        try {
+            TaskDTO dto = taskService.acceptTask(taskId, runnerId);
+            return Result.success("接单成功", dto);
         } catch (IllegalArgumentException | IllegalStateException ex) {
             return Result.error(ex.getMessage());
         }

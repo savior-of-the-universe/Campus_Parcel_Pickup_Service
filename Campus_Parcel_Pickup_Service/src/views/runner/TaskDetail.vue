@@ -80,9 +80,9 @@ let pollTimer = null
 
 // 下一步可执行操作映射
 const ACTION_MAP = {
-  PENDING:    { toStatus: 'ACCEPTED',   label: '立即接单',    btnType: 'primary',  confirm: '确认接单？接单后请尽快取件。' },
-  ACCEPTED:   { toStatus: 'IN_TRANSIT', label: '确认已取件',  btnType: 'warning',  confirm: '确认已取到快递？请确保快递已在手中。' },
-  IN_TRANSIT: { toStatus: 'COMPLETED',  label: '确认送达完成', btnType: 'success', confirm: '确认已完成送达？完成后积分将自动到账。' }
+  PENDING:    { type: 'accept',  label: '立即接单',    btnType: 'primary',  confirm: '确认接单？接单后请尽快取件。' },
+  ACCEPTED:   { type: 'status', toStatus: 'IN_TRANSIT', label: '确认已取件',  btnType: 'warning',  confirm: '确认已取到快递？请确保快递已在手中。' },
+  IN_TRANSIT: { type: 'status', toStatus: 'COMPLETED',  label: '确认送达完成', btnType: 'success', confirm: '确认已完成送达？完成后积分将自动到账。' }
 }
 
 const nextAction = computed(() => ACTION_MAP[task.value.status] || null)
@@ -133,19 +133,33 @@ const handleAction = async () => {
   }
   updating.value = true
   try {
-    const { data: res } = await request.put(`/api/runner/tasks/${task.value.id}/status`, {
-      toStatus: action.toStatus
-    })
+    let res
+    if (action.type === 'accept') {
+      // 专用接单接口（乐观锁）
+      const resp = await request.post(`/api/runner/tasks/${task.value.id}/accept`)
+      res = resp.data
+    } else {
+      // 状态流转接口
+      const resp = await request.put(`/api/runner/tasks/${task.value.id}/status`, {
+        toStatus: action.toStatus
+      })
+      res = resp.data
+    }
+
     if (res?.code === 200) {
-      ElMessage.success('状态更新成功')
+      ElMessage.success(action.type === 'accept' ? '接单成功！' : '状态更新成功')
       task.value = res.data
-      // 完成或无下一步时停止轮询
+      // 接单成功后跳转到"进行中"列表
+      if (action.type === 'accept') {
+        setTimeout(() => router.push({ name: 'RunnerTasks', query: { tab: 'mine' } }), 1200)
+        return
+      }
       if (!ACTION_MAP[res.data.status]) stopPoll()
     } else {
-      ElMessage.error(res?.message || '更新失败')
+      ElMessage.error(res?.message || '操作失败')
     }
   } catch {
-    ElMessage.error('更新失败，请重试')
+    ElMessage.error('操作失败，请重试')
   } finally {
     updating.value = false
   }

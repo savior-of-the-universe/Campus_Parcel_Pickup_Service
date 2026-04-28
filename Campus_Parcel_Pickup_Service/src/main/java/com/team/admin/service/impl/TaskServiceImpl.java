@@ -130,6 +130,81 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
+    public PageResult<TaskDTO> getAvailableTasks(String deliveryPoint, Boolean sortByPoints, int page, int size) {
+        if (page < 1) page = 1;
+        if (size < 1) size = 10;
+        if (size > 50) size = 50;
+
+        QueryWrapper<Task> wrapper = new QueryWrapper<>();
+        wrapper.eq("status", "PENDING");
+        if (StringUtils.hasText(deliveryPoint)) {
+            wrapper.like("delivery_point", deliveryPoint.trim());
+        }
+        if (Boolean.TRUE.equals(sortByPoints)) {
+            wrapper.orderByDesc("reward_points");
+        } else {
+            wrapper.orderByDesc("create_time");
+        }
+
+        Page<Task> pageParam = new Page<>(page, size);
+        Page<Task> result = taskMapper.selectPage(pageParam, wrapper);
+        List<TaskDTO> dtos = result.getRecords().stream().map(t -> toDTO(t, true)).collect(Collectors.toList());
+        return new PageResult<>(dtos, result.getTotal(), page, size);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public TaskDTO acceptTask(Long taskId, Long runnerId) {
+        if (taskId == null || runnerId == null) {
+            throw new IllegalArgumentException("参数不能为空");
+        }
+        // 查询任务（带 version 做乐观锁）
+        Task task = taskMapper.selectById(taskId);
+        if (task == null || task.getDeleted() == 1) {
+            throw new IllegalStateException("任务不存在");
+        }
+        if (!"PENDING".equals(task.getStatus())) {
+            throw new IllegalStateException("任务已被接单，请刷新后重试");
+        }
+
+        User runner = userMapper.selectById(runnerId);
+        if (runner == null) {
+            throw new IllegalStateException("跑腿员信息不存在");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+
+        // 使用乐观锁：条件 status=PENDING AND version=当前版本
+        // MyBatis-Plus @Version 会自动拦截 update，但这里用 UpdateWrapper 更新实体对象时需先 set version
+        // 直接 update entity，MP 会自动带 version 条件
+        task.setStatus("ACCEPTED");
+        task.setRunnerId(runnerId);
+        task.setRunnerNickname(runner.getName());
+        task.setRunnerPhone(runner.getPhone());
+        task.setAcceptTime(now);
+        // version 字段由 MP @Version 自动 +1
+
+        int updated = taskMapper.updateById(task);
+        if (updated == 0) {
+            // 乐观锁失败：版本号不匹配，说明被其他人抢先接单
+            throw new IllegalStateException("手速太慢，任务已被其他人接单！");
+        }
+
+        // 写 task_log
+        TaskLog log = new TaskLog();
+        log.setTaskId(taskId);
+        log.setOperatorId(runnerId);
+        log.setOperatorRole("RUNNER");
+        log.setFromStatus("PENDING");
+        log.setToStatus("ACCEPTED");
+        log.setCreateTime(now);
+        taskLogMapper.insert(log);
+
+        Task updated2 = taskMapper.selectById(taskId);
+        return toDTO(updated2, false);
+    }
+
+    @Override
     public PageResult<TaskDTO> getRunnerTasks(Long runnerId, String statusGroup, int page, int size) {
         if (runnerId == null) {
             return new PageResult<>(new ArrayList<>(), 0, page, size);
@@ -159,7 +234,7 @@ public class TaskServiceImpl implements TaskService {
 
         Page<Task> pageParam = new Page<>(page, size);
         Page<Task> result = taskMapper.selectPage(pageParam, wrapper);
-        List<TaskDTO> dtos = result.getRecords().stream().map(this::toDTO).collect(Collectors.toList());
+        List<TaskDTO> dtos = result.getRecords().stream().map(t -> toDTO(t, true)).collect(Collectors.toList());
         return new PageResult<>(dtos, result.getTotal(), page, size);
     }
 
@@ -289,9 +364,23 @@ public class TaskServiceImpl implements TaskService {
     }
 
     private TaskDTO toDTO(Task task) {
+        return toDTO(task, false);
+    }
+
+    /**
+     * @param maskPickupCode true=列表模式(取件码后四位)，false=详情模式(完整取件码)
+     */
+    private TaskDTO toDTO(Task task, boolean maskPickupCode) {
         TaskDTO dto = new TaskDTO();
         dto.setId(task.getId());
-        dto.setPickupCode(task.getPickupCode());
+        dto.setPickupCode(maskPickupCode ? null : task.getPickupCode());
+        // 后四位脱敏
+        if (StringUtils.hasText(task.getPickupCode())) {
+            String code = task.getPickupCode();
+            dto.setPickupCodeMasked(code.length() >= 4
+                    ? "****" + code.substring(code.length() - 4)
+                    : "****");
+        }
         dto.setDeliveryPoint(task.getDeliveryPoint());
         dto.setWeight(task.getWeight());
         dto.setRewardPoints(task.getRewardPoints());

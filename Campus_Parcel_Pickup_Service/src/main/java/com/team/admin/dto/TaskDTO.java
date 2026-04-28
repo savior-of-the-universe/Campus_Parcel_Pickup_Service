@@ -7,6 +7,8 @@ import java.util.List;
 public class TaskDTO {
     private Long id;
     private String pickupCode;
+    /** 取件码后四位（列表页脱敏展示） */
+    private String pickupCodeMasked;
     private String deliveryPoint;
     private BigDecimal weight;
     private Integer rewardPoints;
@@ -28,6 +30,9 @@ public class TaskDTO {
 
     public String getPickupCode() { return pickupCode; }
     public void setPickupCode(String pickupCode) { this.pickupCode = pickupCode; }
+
+    public String getPickupCodeMasked() { return pickupCodeMasked; }
+    public void setPickupCodeMasked(String pickupCodeMasked) { this.pickupCodeMasked = pickupCodeMasked; }
 
     public String getDeliveryPoint() { return deliveryPoint; }
     public void setDeliveryPoint(String deliveryPoint) { this.deliveryPoint = deliveryPoint; }

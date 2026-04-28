@@ -35,9 +35,21 @@ public interface TaskService {
     PageResult<TaskDTO> getRunnerTasks(Long runnerId, String statusGroup, int page, int size);
 
     /**
+     * 获取待接单任务列表（支持快递点筛选、积分排序）
+     * @param deliveryPoint 快递点关键字（可空）
+     * @param sortByPoints  true=按积分倒序，false/null=按发布时间倒序
+     */
+    PageResult<TaskDTO> getAvailableTasks(String deliveryPoint, Boolean sortByPoints, int page, int size);
+
+    /**
      * 获取任务详情（跑腿员视角，可查看待接单或自己接的任务）
      */
     TaskDTO getTaskDetailForRunner(Long taskId, Long runnerId);
+
+    /**
+     * 跑腿员接单（乐观锁防并发）
+     */
+    TaskDTO acceptTask(Long taskId, Long runnerId);
 
     /**
      * 跑腿员更新任务状态（状态机校验）
