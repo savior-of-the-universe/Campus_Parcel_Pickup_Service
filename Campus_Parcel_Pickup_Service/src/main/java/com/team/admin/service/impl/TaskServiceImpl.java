@@ -120,11 +120,15 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public TaskDTO getTaskDetail(Long taskId, Long publisherId) {
-        if (taskId == null || publisherId == null) {
+        if (taskId == null) {
             return null;
         }
         QueryWrapper<Task> wrapper = new QueryWrapper<>();
-        wrapper.eq("id", taskId).eq("publisher_id", publisherId);
+        wrapper.eq("id", taskId);
+        // publisherId 为 null 表示管理员/客服视角，不限制发布者
+        if (publisherId != null) {
+            wrapper.eq("publisher_id", publisherId);
+        }
         Task task = taskMapper.selectOne(wrapper);
         return task == null ? null : toDTO(task);
     }
@@ -367,9 +371,29 @@ public class TaskServiceImpl implements TaskService {
         return toDTO(task, false);
     }
 
-    /**
-     * @param maskPickupCode true=列表模式(取件码后四位)，false=详情模式(完整取件码)
-     */
+    @Override
+    public PageResult<TaskDTO> getAllTasks(String status, String keyword, int page, int size) {
+        if (page < 1) page = 1;
+        if (size < 1) size = 10;
+        if (size > 100) size = 100;
+
+        QueryWrapper<Task> wrapper = new QueryWrapper<>();
+        if (StringUtils.hasText(status)) {
+            wrapper.eq("status", status.trim().toUpperCase());
+        }
+        if (StringUtils.hasText(keyword)) {
+            wrapper.like("delivery_point", keyword.trim());
+        }
+        wrapper.orderByDesc("create_time");
+
+        Page<Task> pageParam = new Page<>(page, size);
+        Page<Task> result = taskMapper.selectPage(pageParam, wrapper);
+        List<TaskDTO> dtos = result.getRecords().stream()
+                .map(t -> toDTO(t, false))
+                .collect(Collectors.toList());
+        return new PageResult<>(dtos, result.getTotal(), page, size);
+    }
+
     private TaskDTO toDTO(Task task, boolean maskPickupCode) {
         TaskDTO dto = new TaskDTO();
         dto.setId(task.getId());

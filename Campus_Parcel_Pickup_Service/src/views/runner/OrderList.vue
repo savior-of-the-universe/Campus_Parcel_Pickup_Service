@@ -3,13 +3,9 @@
     <div class="header">
       <h2>我的接单</h2>
       <div class="actions">
-        <el-select v-model="filters.status" placeholder="状态筛选" clearable @change="handleFilterChange">
-          <el-option label="全部" value="" />
-          <el-option label="待接单" value="PENDING" />
-          <el-option label="接单中" value="ACCEPTED" />
-          <el-option label="进行中" value="IN_TRANSIT" />
-          <el-option label="已完成" value="COMPLETED" />
-          <el-option label="已取消" value="CANCELLED" />
+        <el-select v-model="filters.statusGroup" placeholder="分组" @change="handleFilterChange">
+          <el-option label="进行中" value="mine" />
+          <el-option label="已完成" value="completed" />
         </el-select>
         <el-select v-model="filters.sort" placeholder="排序" @change="handleFilterChange">
           <el-option label="按发布时间降序" value="DESC" />
@@ -26,10 +22,10 @@
       class="order-table"
       @row-click="handleRowClick"
     >
-      <el-table-column prop="title" label="标题" min-width="160" />
-      <el-table-column prop="amount" label="金额" width="100">
+      <el-table-column prop="deliveryPoint" label="快递点" min-width="160" />
+      <el-table-column prop="rewardPoints" label="悬赏积分" width="100">
         <template #default="{ row }">
-          <span class="amount">￥{{ formatAmount(row.amount) }}</span>
+          <span class="points">{{ row.rewardPoints }} 分</span>
         </template>
       </el-table-column>
       <el-table-column prop="status" label="状态" width="110">
@@ -42,7 +38,7 @@
           {{ formatDate(row.createTime) }}
         </template>
       </el-table-column>
-      <el-table-column prop="orderNo" label="订单号" width="180" />
+      <el-table-column prop="pickupCodeMasked" label="取件码(后四位)" width="140" />
       <el-table-column label="操作" width="120" fixed="right">
         <template #default="{ row }">
           <el-button type="primary" link @click.stop="handleRowClick(row)">查看详情</el-button>
@@ -77,7 +73,7 @@ const loading = ref(false)
 const orderList = ref([])
 
 const filters = reactive({
-  status: '',
+  statusGroup: 'mine',
   sort: 'DESC'
 })
 
@@ -93,17 +89,20 @@ const fetchOrders = async () => {
     const params = {
       page: pagination.page,
       size: pagination.size,
-      sort: filters.sort
-    }
-    if (filters.status) {
-      params.status = filters.status
+      statusGroup: filters.statusGroup
     }
 
-    const response = await request.get('/api/runner/orders', { params })
+    const response = await request.get('/api/runner/tasks', { params })
     const { code, data, message } = response?.data || {}
     if (code === 200 && data) {
-      orderList.value = data.records || []
-      pagination.total = data.total || 0
+      let records = data.records || data.list || []
+      if (filters.sort === 'ASC') {
+        records = records.slice().sort((a, b) => new Date(a.createTime) - new Date(b.createTime))
+      } else {
+        records = records.slice().sort((a, b) => new Date(b.createTime) - new Date(a.createTime))
+      }
+      orderList.value = records
+      pagination.total = data.total || records.length
     } else {
       ElMessage.error(message || '获取接单列表失败')
     }
@@ -132,7 +131,7 @@ const handleSizeChange = (size) => {
 }
 
 const handleRowClick = (row) => {
-  router.push({ name: 'RunnerOrderDetail', params: { id: row.id } })
+  router.push({ name: 'RunnerTaskDetail', params: { id: row.id } })
 }
 
 const statusText = (status) => {
@@ -169,13 +168,6 @@ const formatDate = (value) => {
   })
 }
 
-const formatAmount = (amount) => {
-  if (amount === null || amount === undefined) return '0.00'
-  const num = Number(amount)
-  if (Number.isNaN(num)) return '0.00'
-  return num.toFixed(2)
-}
-
 onMounted(() => {
   fetchOrders()
 })
@@ -204,9 +196,9 @@ onMounted(() => {
   width: 100%;
 }
 
-.amount {
+.points {
   font-weight: 600;
-  color: #303133;
+  color: #e6a23c;
 }
 
 .pagination {

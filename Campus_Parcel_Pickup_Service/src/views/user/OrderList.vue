@@ -5,10 +5,8 @@
       <div class="actions">
         <el-select v-model="filters.status" placeholder="状态筛选" clearable @change="handleFilterChange">
           <el-option label="全部" value="" />
-          <el-option label="待接单" value="PENDING" />
-          <el-option label="进行中" value="IN_TRANSIT" />
-          <el-option label="已完成" value="COMPLETED" />
-          <el-option label="已取消" value="CANCELLED" />
+          <el-option label="待接单" value="in_progress" />
+          <el-option label="已完成" value="completed" />
         </el-select>
         <el-select v-model="filters.sort" placeholder="排序" @change="handleFilterChange">
           <el-option label="按发布时间降序" value="DESC" />
@@ -25,10 +23,10 @@
       class="order-table"
       @row-click="handleRowClick"
     >
-      <el-table-column prop="title" label="标题" min-width="160" />
-      <el-table-column prop="amount" label="金额" width="100">
+      <el-table-column prop="deliveryPoint" label="快递点" min-width="160" />
+      <el-table-column prop="rewardPoints" label="悬赏积分" width="100">
         <template #default="{ row }">
-          <span class="amount">￥{{ formatAmount(row.amount) }}</span>
+          <span class="points">{{ row.rewardPoints }} 分</span>
         </template>
       </el-table-column>
       <el-table-column prop="status" label="状态" width="110">
@@ -41,7 +39,7 @@
           {{ formatDate(row.createTime) }}
         </template>
       </el-table-column>
-      <el-table-column prop="orderNo" label="订单号" width="180" />
+      <el-table-column prop="pickupCodeMasked" label="取件码(后四位)" width="140" />
       <el-table-column label="操作" width="120" fixed="right">
         <template #default="{ row }">
           <el-button type="primary" link @click.stop="handleRowClick(row)">查看详情</el-button>
@@ -49,7 +47,7 @@
       </el-table-column>
     </el-table>
 
-    <el-empty v-else-if="!loading" description="暂无历史订单" class="empty-block" />
+    <el-empty v-else-if="!loading" description="暂无任务记录" class="empty-block" />
 
     <div class="pagination" v-if="pagination.total > 0">
       <el-pagination
@@ -91,25 +89,31 @@ const fetchOrders = async () => {
   try {
     const params = {
       page: pagination.page,
-      size: pagination.size,
-      sort: filters.sort
+      size: pagination.size
     }
     if (filters.status) {
       params.status = filters.status
     }
 
-    const response = await request.get('/api/user/orders', { params })
+    const response = await request.get('/api/task/my-published', { params })
     const { code, data, message } = response?.data || {}
     if (code === 200 && data) {
-      orderList.value = data.records || []
-      pagination.total = data.total || 0
+      let records = data.records || data.list || []
+      // 支持排序
+      if (filters.sort === 'ASC') {
+        records = records.slice().sort((a, b) => new Date(a.createTime) - new Date(b.createTime))
+      } else {
+        records = records.slice().sort((a, b) => new Date(b.createTime) - new Date(a.createTime))
+      }
+      orderList.value = records
+      pagination.total = data.total || records.length
     } else {
-      ElMessage.error(message || '获取订单列表失败')
+      ElMessage.error(message || '获取任务列表失败')
     }
 
   } catch (error) {
-    console.error('获取订单列表失败', error)
-    ElMessage.error('获取订单列表失败')
+    console.error('获取任务列表失败', error)
+    ElMessage.error('获取任务列表失败')
   } finally {
     loading.value = false
   }
@@ -132,7 +136,7 @@ const handleSizeChange = (size) => {
 }
 
 const handleRowClick = (row) => {
-  router.push({ name: 'UserOrderDetail', params: { id: row.id } })
+  router.push({ name: 'UserTaskDetail', params: { id: row.id } })
 }
 
 const statusText = (status) => {
@@ -169,13 +173,6 @@ const formatDate = (value) => {
   })
 }
 
-const formatAmount = (amount) => {
-  if (amount === null || amount === undefined) return '0.00'
-  const num = Number(amount)
-  if (Number.isNaN(num)) return '0.00'
-  return num.toFixed(2)
-}
-
 onMounted(() => {
   fetchOrders()
 })
@@ -204,9 +201,9 @@ onMounted(() => {
   width: 100%;
 }
 
-.amount {
+.points {
   font-weight: 600;
-  color: #303133;
+  color: #e6a23c;
 }
 
 .pagination {

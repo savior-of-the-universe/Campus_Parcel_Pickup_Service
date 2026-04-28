@@ -60,5 +60,14 @@ public interface TaskService {
      * @return 更新后的 TaskDTO
      */
     TaskDTO updateTaskStatus(Long taskId, Long runnerId, TaskStatusUpdateRequest request);
+
+    /**
+     * 客服/管理员：分页查询全量任务，支持状态筛选和关键字搜索
+     * @param status    状态筛选（可空）
+     * @param keyword   快递点关键字（可空）
+     * @param page      页码
+     * @param size      每页条数
+     */
+    PageResult<TaskDTO> getAllTasks(String status, String keyword, int page, int size);
 }
 
