@@ -62,9 +62,14 @@ const orderedTimeline = computed(() => {
 
 const activeStep = computed(() => Math.max(orderedTimeline.value.length - 1, 0))
 
+const roleText = (role) => {
+  const map = { CUSTOMER: '用户', RUNNER: '跑腿员', CS: '客服', ADMIN: '管理员', SYSTEM: '系统' }
+  return map[role?.toUpperCase()] || role || '系统'
+}
+
 const formatTimelineDesc = (event) => {
   const parts = []
-  if (event?.role) parts.push(`角色: ${event.role}`)
+  if (event?.role) parts.push(`操作人：${roleText(event.role)}`)
   if (event?.description) parts.push(event.description)
   return parts.join('｜') || '状态更新'
 }

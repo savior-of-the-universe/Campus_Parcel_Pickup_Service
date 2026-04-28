@@ -214,15 +214,17 @@ public class OrderServiceImpl implements OrderService {
         }
         String role = getCurrentRole();
         if (isCsOrAdmin(role)) {
-            // 客服/管理员：学号、手机号全部脱敏
+            // 客服/管理员：学号、手机号全部脱敏展示
             detail.setCustomerStudentId(DataMaskingUtils.maskStudentId(detail.getCustomerStudentId()));
             detail.setRunnerStudentId(DataMaskingUtils.maskStudentId(detail.getRunnerStudentId()));
             detail.setCustomerPhone(DataMaskingUtils.maskPhone(detail.getCustomerPhone()));
             detail.setRunnerPhone(DataMaskingUtils.maskPhone(detail.getRunnerPhone()));
         } else {
-            // 非客服（用户/跑腿）：隐藏学号，仅保留对端手机号明文
+            // 普通用户/跑腿员：不暴露学号；对端手机号脱敏展示（保护隐私）
             detail.setCustomerStudentId(null);
             detail.setRunnerStudentId(null);
+            detail.setCustomerPhone(DataMaskingUtils.maskPhone(detail.getCustomerPhone()));
+            detail.setRunnerPhone(DataMaskingUtils.maskPhone(detail.getRunnerPhone()));
         }
     }
 
