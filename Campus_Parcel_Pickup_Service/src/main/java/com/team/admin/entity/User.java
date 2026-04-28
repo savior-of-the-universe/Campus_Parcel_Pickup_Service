@@ -19,6 +19,7 @@ public class User {
     private Integer status;         // 状态：0-禁用，1-启用
     private String password;        // 密码
     private String dormitoryArea;   // 宿舍区域
+    private Integer points;         // 积分余额
     private LocalDateTime createTime; // 创建时间
     private LocalDateTime updateTime; // 更新时间
 
@@ -103,6 +104,14 @@ public class User {
 
     public void setDormitoryArea(String dormitoryArea) {
         this.dormitoryArea = dormitoryArea;
+    }
+
+    public Integer getPoints() {
+        return points;
+    }
+
+    public void setPoints(Integer points) {
+        this.points = points;
     }
 
     public LocalDateTime getCreateTime() {

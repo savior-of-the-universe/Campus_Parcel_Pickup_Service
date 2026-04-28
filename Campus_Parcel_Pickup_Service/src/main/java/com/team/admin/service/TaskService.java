@@ -3,6 +3,7 @@ package com.team.admin.service;
 import com.team.admin.dto.PageResult;
 import com.team.admin.dto.TaskDTO;
 import com.team.admin.dto.TaskPublishRequest;
+import com.team.admin.dto.TaskStatusUpdateRequest;
 
 import java.util.List;
 
@@ -22,8 +23,30 @@ public interface TaskService {
     PageResult<TaskDTO> getMyPublished(Long publisherId, String statusGroup, int page, int size);
 
     /**
-     * 获取单个任务详情
+     * 获取单个任务详情（发布者视角）
      */
     TaskDTO getTaskDetail(Long taskId, Long publisherId);
+
+    /**
+     * 跑腿员分页查询可接/已接任务
+     * @param runnerId 跑腿员ID
+     * @param statusGroup "available"=待接单, "mine"=我接的进行中, "completed"=已完成/取消, null=全部
+     */
+    PageResult<TaskDTO> getRunnerTasks(Long runnerId, String statusGroup, int page, int size);
+
+    /**
+     * 获取任务详情（跑腿员视角，可查看待接单或自己接的任务）
+     */
+    TaskDTO getTaskDetailForRunner(Long taskId, Long runnerId);
+
+    /**
+     * 跑腿员更新任务状态（状态机校验）
+     * PENDING→ACCEPTED, ACCEPTED→IN_TRANSIT, IN_TRANSIT→COMPLETED
+     * @param taskId     任务ID
+     * @param runnerId   操作跑腿员ID
+     * @param request    目标状态及凭证图
+     * @return 更新后的 TaskDTO
+     */
+    TaskDTO updateTaskStatus(Long taskId, Long runnerId, TaskStatusUpdateRequest request);
 }
 

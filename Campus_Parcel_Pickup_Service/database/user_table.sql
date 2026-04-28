@@ -25,3 +25,8 @@ INSERT INTO `user` (`student_id`, `name`, `phone`, `role`, `status`, `password`,
 ('2021003', '王五', '13800138003', 'RUNNER', 1, '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iKVjzieMwkOmANgNOgKQNNBDvAGK', '南区'),
 ('2021004', '赵六', '13800138004', 'RUNNER', 1, '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iKVjzieMwkOmANgNOgKQNNBDvAGK', '北区'),
 ('2021005', '客服小美', '13800138005', 'ADMIN', 1, '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iKVjzieMwkOmANgNOgKQNNBDvAGK', '东区');
+
+-- ============================================================
+-- 升级脚本：添加积分字段（已有则跳过）
+-- ============================================================
+ALTER TABLE `user` ADD COLUMN `points` INT NOT NULL DEFAULT 0 COMMENT '积分余额';

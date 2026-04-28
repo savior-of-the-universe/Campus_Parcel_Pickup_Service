@@ -124,6 +124,27 @@ const routes = [
   },
 
   {
+    path: '/runner/tasks',
+    name: 'RunnerTasks',
+    component: () => import('@/views/runner/TaskList.vue'),
+    meta: {
+      title: '任务大厅',
+      requiresAuth: true,
+      roles: ['RUNNER']
+    }
+  },
+  {
+    path: '/runner/tasks/:id',
+    name: 'RunnerTaskDetail',
+    component: () => import('@/views/runner/TaskDetail.vue'),
+    meta: {
+      title: '任务详情',
+      requiresAuth: true,
+      roles: ['RUNNER']
+    }
+  },
+
+  {
     path: '/user/tasks',
     name: 'UserTasks',
     component: () => import('@/views/user/TaskList.vue'),

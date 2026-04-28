@@ -1,15 +1,22 @@
 package com.team.admin.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.team.admin.dto.PageResult;
 import com.team.admin.dto.TaskDTO;
 import com.team.admin.dto.TaskPublishRequest;
+import com.team.admin.dto.TaskStatusUpdateRequest;
 import com.team.admin.entity.Task;
+import com.team.admin.entity.TaskLog;
+import com.team.admin.entity.User;
+import com.team.admin.mapper.TaskLogMapper;
 import com.team.admin.mapper.TaskMapper;
+import com.team.admin.mapper.UserMapper;
 import com.team.admin.service.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
@@ -28,6 +35,12 @@ public class TaskServiceImpl implements TaskService {
 
     @Autowired
     private TaskMapper taskMapper;
+
+    @Autowired
+    private TaskLogMapper taskLogMapper;
+
+    @Autowired
+    private UserMapper userMapper;
 
     @Override
     public TaskDTO publishTask(TaskPublishRequest request, Long publisherId) {
@@ -114,6 +127,165 @@ public class TaskServiceImpl implements TaskService {
         wrapper.eq("id", taskId).eq("publisher_id", publisherId);
         Task task = taskMapper.selectOne(wrapper);
         return task == null ? null : toDTO(task);
+    }
+
+    @Override
+    public PageResult<TaskDTO> getRunnerTasks(Long runnerId, String statusGroup, int page, int size) {
+        if (runnerId == null) {
+            return new PageResult<>(new ArrayList<>(), 0, page, size);
+        }
+        if (page < 1) page = 1;
+        if (size < 1) size = 10;
+        if (size > 50) size = 50;
+
+        QueryWrapper<Task> wrapper = new QueryWrapper<>();
+        if ("available".equals(statusGroup)) {
+            // 待接单：状态为 PENDING
+            wrapper.eq("status", "PENDING");
+        } else if ("mine".equals(statusGroup)) {
+            // 我接的进行中：ACCEPTED 或 IN_TRANSIT
+            wrapper.eq("runner_id", runnerId)
+                    .in("status", Arrays.asList("ACCEPTED", "IN_TRANSIT"));
+        } else if ("completed".equals(statusGroup)) {
+            // 我的已完成/取消
+            wrapper.eq("runner_id", runnerId)
+                    .in("status", COMPLETED_STATUSES);
+        } else {
+            // 全部：待接单 + 我接的
+            wrapper.and(w -> w.eq("status", "PENDING")
+                    .or().eq("runner_id", runnerId));
+        }
+        wrapper.orderByDesc("create_time");
+
+        Page<Task> pageParam = new Page<>(page, size);
+        Page<Task> result = taskMapper.selectPage(pageParam, wrapper);
+        List<TaskDTO> dtos = result.getRecords().stream().map(this::toDTO).collect(Collectors.toList());
+        return new PageResult<>(dtos, result.getTotal(), page, size);
+    }
+
+    @Override
+    public TaskDTO getTaskDetailForRunner(Long taskId, Long runnerId) {
+        if (taskId == null || runnerId == null) return null;
+        QueryWrapper<Task> wrapper = new QueryWrapper<>();
+        wrapper.eq("id", taskId);
+        Task task = taskMapper.selectOne(wrapper);
+        if (task == null) return null;
+        // 跑腿员只能查看：待接单 或 自己接的
+        if (!"PENDING".equals(task.getStatus()) && !runnerId.equals(task.getRunnerId())) {
+            return null;
+        }
+        return toDTO(task);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public TaskDTO updateTaskStatus(Long taskId, Long runnerId, TaskStatusUpdateRequest request) {
+        if (taskId == null || runnerId == null || request == null) {
+            throw new IllegalArgumentException("参数不能为空");
+        }
+        String toStatus = request.getToStatus();
+        if (!StringUtils.hasText(toStatus)) {
+            throw new IllegalArgumentException("目标状态不能为空");
+        }
+
+        Task task = taskMapper.selectById(taskId);
+        if (task == null || task.getDeleted() == 1) {
+            throw new IllegalStateException("任务不存在");
+        }
+        String fromStatus = task.getStatus();
+
+        // 状态机校验：合法流转路径
+        validateTransition(fromStatus, toStatus, runnerId, task);
+
+        LocalDateTime now = LocalDateTime.now();
+
+        // 更新 task 字段
+        UpdateWrapper<Task> update = new UpdateWrapper<>();
+        update.eq("id", taskId).set("status", toStatus);
+
+        if ("ACCEPTED".equals(toStatus)) {
+            // 接单：绑定跑腿员信息
+            User runner = userMapper.selectById(runnerId);
+            if (runner == null) throw new IllegalStateException("跑腿员不存在");
+            update.set("runner_id", runnerId)
+                    .set("runner_nickname", runner.getName())
+                    .set("runner_phone", runner.getPhone())
+                    .set("accept_time", now);
+        } else if ("IN_TRANSIT".equals(toStatus)) {
+            update.set("pickup_time", now);
+        } else if ("COMPLETED".equals(toStatus)) {
+            update.set("complete_time", now);
+        } else if ("CANCELLED".equals(toStatus)) {
+            update.set("cancel_time", now);
+        }
+
+        taskMapper.update(null, update);
+
+        // 写 task_log
+        TaskLog log = new TaskLog();
+        log.setTaskId(taskId);
+        log.setOperatorId(runnerId);
+        log.setOperatorRole("RUNNER");
+        log.setFromStatus(fromStatus);
+        log.setToStatus(toStatus);
+        log.setRemark(request.getProofImageUrl());
+        log.setCreateTime(now);
+        taskLogMapper.insert(log);
+
+        // 任务完成：积分从发布者转给跑腿员
+        if ("COMPLETED".equals(toStatus)) {
+            transferPoints(task.getPublisherId(), runnerId, task.getRewardPoints());
+        }
+
+        // 重新查询返回最新数据
+        Task updated = taskMapper.selectById(taskId);
+        return toDTO(updated);
+    }
+
+    /**
+     * 状态机校验
+     * PENDING → ACCEPTED（任何跑腿员）
+     * ACCEPTED → IN_TRANSIT（必须是接单跑腿员）
+     * IN_TRANSIT → COMPLETED（必须是接单跑腿员）
+     */
+    private void validateTransition(String from, String to, Long runnerId, Task task) {
+        if ("PENDING".equals(from) && "ACCEPTED".equals(to)) {
+            // 正常接单，任何跑腿员均可
+            return;
+        }
+        if ("ACCEPTED".equals(from) && "IN_TRANSIT".equals(to)) {
+            if (!runnerId.equals(task.getRunnerId())) {
+                throw new IllegalStateException("只有接单跑腿员才能更新状态");
+            }
+            return;
+        }
+        if ("IN_TRANSIT".equals(from) && "COMPLETED".equals(to)) {
+            if (!runnerId.equals(task.getRunnerId())) {
+                throw new IllegalStateException("只有接单跑腿员才能更新状态");
+            }
+            return;
+        }
+        throw new IllegalStateException(
+                String.format("不允许的状态流转：%s → %s", from, to));
+    }
+
+    /**
+     * 积分转账：发布者扣积分，跑腿员加积分
+     */
+    private void transferPoints(Long publisherId, Long runnerId, Integer points) {
+        if (points == null || points <= 0) return;
+
+        // 扣发布者积分（不低于0）
+        UpdateWrapper<User> deduct = new UpdateWrapper<>();
+        deduct.eq("id", publisherId)
+                .setSql("points = GREATEST(points - " + points + ", 0)");
+        userMapper.update(null, deduct);
+
+        // 加跑腿员积分
+        UpdateWrapper<User> add = new UpdateWrapper<>();
+        add.eq("id", runnerId)
+                .setSql("points = points + " + points);
+        userMapper.update(null, add);
     }
 
     private TaskDTO toDTO(Task task) {
