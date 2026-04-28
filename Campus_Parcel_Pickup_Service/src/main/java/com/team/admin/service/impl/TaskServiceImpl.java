@@ -136,6 +136,28 @@ public class TaskServiceImpl implements TaskService {
                 dto.setRunnerPhoneMasked("****");
             }
         }
+        // 组装状态时间线
+        String status = task.getStatus();
+        boolean cancelled = "CANCELLED".equals(status);
+        List<TaskDTO.TimelineItem> timeline = new ArrayList<>();
+        // 发布
+        timeline.add(new TaskDTO.TimelineItem("PENDING", "发布任务", task.getCreateTime(), true));
+        // 接单
+        boolean accepted = task.getAcceptTime() != null
+                || "ACCEPTED".equals(status) || "IN_TRANSIT".equals(status) || "COMPLETED".equals(status);
+        timeline.add(new TaskDTO.TimelineItem("ACCEPTED", "跑腿员接单", task.getAcceptTime(), accepted && !cancelled));
+        // 取件
+        boolean pickedUp = task.getPickupTime() != null
+                || "IN_TRANSIT".equals(status) || "COMPLETED".equals(status);
+        timeline.add(new TaskDTO.TimelineItem("IN_TRANSIT", "已取到快递", task.getPickupTime(), pickedUp && !cancelled));
+        // 完成
+        boolean completed = task.getCompleteTime() != null || "COMPLETED".equals(status);
+        timeline.add(new TaskDTO.TimelineItem("COMPLETED", "完成送达", task.getCompleteTime(), completed));
+        // 取消（仅取消时追加）
+        if (cancelled) {
+            timeline.add(new TaskDTO.TimelineItem("CANCELLED", "任务取消", task.getCancelTime(), true));
+        }
+        dto.setTimeline(timeline);
         return dto;
     }
 }

@@ -8,7 +8,11 @@ CREATE TABLE IF NOT EXISTS `task` (
     `reward_points` INT NOT NULL COMMENT '悬赏积分',
     `remark` VARCHAR(100) NULL COMMENT '备注',
     `status` VARCHAR(20) NOT NULL COMMENT '任务状态：PENDING/ACCEPTED/IN_TRANSIT/COMPLETED/CANCELLED',
-    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '发布时间',
+    `accept_time` DATETIME NULL COMMENT '跑腿员接单时间',
+    `pickup_time` DATETIME NULL COMMENT '跑腿员取件成功时间',
+    `complete_time` DATETIME NULL COMMENT '任务完成时间',
+    `cancel_time` DATETIME NULL COMMENT '任务取消时间',
     `runner_id` BIGINT NULL COMMENT '接单跑腿员ID',
     `runner_nickname` VARCHAR(50) NULL COMMENT '跑腿员昵称（冗余）',
     `runner_phone` VARCHAR(20) NULL COMMENT '跑腿员手机号',
@@ -17,9 +21,25 @@ CREATE TABLE IF NOT EXISTS `task` (
     INDEX idx_publisher_status (`publisher_id`, `status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 若表已存在，补充新字段（升级用）
-ALTER TABLE `task`
-    ADD COLUMN IF NOT EXISTS `runner_id` BIGINT NULL COMMENT '接单跑腿员ID',
-    ADD COLUMN IF NOT EXISTS `runner_nickname` VARCHAR(50) NULL COMMENT '跑腿员昵称',
-    ADD COLUMN IF NOT EXISTS `runner_phone` VARCHAR(20) NULL COMMENT '跑腿员手机号',
-    ADD COLUMN IF NOT EXISTS `deleted` TINYINT NOT NULL DEFAULT 0 COMMENT '逻辑删除';
+-- ============================================================
+-- 升级脚本：若 task 表已存在且缺少以下字段，逐条执行
+-- （每条单独执行，遇到 Duplicate column name 报错可跳过）
+-- ============================================================
+
+-- 1. 接单跑腿员ID
+ALTER TABLE `task` ADD COLUMN `runner_id` BIGINT NULL COMMENT '接单跑腿员ID';
+
+-- 2. 跑腿员昵称（冗余）
+ALTER TABLE `task` ADD COLUMN `runner_nickname` VARCHAR(50) NULL COMMENT '跑腿员昵称（冗余）';
+
+-- 3. 跑腿员手机号
+ALTER TABLE `task` ADD COLUMN `runner_phone` VARCHAR(20) NULL COMMENT '跑腿员手机号';
+
+-- 4. 逻辑删除标志（MyBatis-Plus 全局逻辑删除字段）
+ALTER TABLE `task` ADD COLUMN `deleted` TINYINT NOT NULL DEFAULT 0 COMMENT '逻辑删除：0-未删除 1-已删除';
+
+-- 5. 状态时间线时间戳
+ALTER TABLE `task` ADD COLUMN `accept_time` DATETIME NULL COMMENT '跑腿员接单时间';
+ALTER TABLE `task` ADD COLUMN `pickup_time` DATETIME NULL COMMENT '跑腿员取件成功时间';
+ALTER TABLE `task` ADD COLUMN `complete_time` DATETIME NULL COMMENT '任务完成时间';
+ALTER TABLE `task` ADD COLUMN `cancel_time` DATETIME NULL COMMENT '任务取消时间';

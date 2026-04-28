@@ -3,6 +3,7 @@
     <div class="page-header">
       <el-button :icon="ArrowLeft" link @click="router.back()">返回</el-button>
       <span class="page-title">任务详情</span>
+      <el-button :icon="RefreshRight" circle size="small" :loading="loading" @click="fetchDetail" style="margin-left:auto" />
     </div>
 
     <template v-if="task">
@@ -51,15 +52,26 @@
 
       <!-- 状态时间线 -->
       <el-card shadow="never" class="detail-card">
-        <template #header><span>任务进度</span></template>
-        <el-steps direction="vertical" :active="activeStep" finish-status="success" class="task-steps">
-          <el-step
-            v-for="(step, index) in statusSteps"
-            :key="step.status"
-            :title="step.label"
-            :description="index < activeStep ? step.doneDesc : (index === activeStep ? step.activeDesc : '')"
-          />
-        </el-steps>
+        <template #header>
+          <div class="card-header">
+            <span>任务进度</span>
+            <span class="poll-hint">每30秒自动刷新</span>
+          </div>
+        </template>
+        <el-timeline class="task-timeline">
+          <el-timeline-item
+            v-for="item in task.timeline"
+            :key="item.status"
+            :type="timelineItemType(item)"
+            :hollow="!item.done"
+            :timestamp="item.time ? formatDate(item.time) : '等待中...'"
+            placement="top"
+          >
+            <span :class="['timeline-label', { 'timeline-done': item.done, 'timeline-pending': !item.done }]">
+              {{ item.label }}
+            </span>
+          </el-timeline-item>
+        </el-timeline>
       </el-card>
     </template>
 
@@ -70,10 +82,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft } from '@element-plus/icons-vue'
+import { ArrowLeft, RefreshRight } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 
 const router = useRouter()
@@ -81,22 +93,7 @@ const route = useRoute()
 
 const loading = ref(false)
 const task = ref(null)
-
-const statusSteps = [
-  { status: 'PENDING',   label: '待接单',  doneDesc: '任务已发布',   activeDesc: '等待跑腿员接单...' },
-  { status: 'ACCEPTED',  label: '已接单',  doneDesc: '已有跑腿员接单', activeDesc: '跑腿员正在前往取件...' },
-  { status: 'IN_TRANSIT',label: '配送中',  doneDesc: '取件成功，配送中', activeDesc: '快递正在送来的路上...' },
-  { status: 'COMPLETED', label: '已完成',  doneDesc: '任务完成',      activeDesc: '任务已完成' }
-]
-
-const statusOrder = statusSteps.map(s => s.status)
-
-const activeStep = computed(() => {
-  if (!task.value) return 0
-  if (task.value.status === 'CANCELLED') return 0
-  const idx = statusOrder.indexOf(task.value.status)
-  return idx >= 0 ? idx : 0
-})
+let pollingTimer = null
 
 const fetchDetail = async () => {
   const id = route.params.id
@@ -128,6 +125,13 @@ const statusType = (status) => {
   return map[status] || 'info'
 }
 
+const timelineItemType = (item) => {
+  if (!item.done) return 'info'
+  if (item.status === 'CANCELLED') return 'danger'
+  if (item.status === 'COMPLETED') return 'success'
+  return 'primary'
+}
+
 const formatDate = (value) => {
   if (!value) return '-'
   return new Date(value).toLocaleString('zh-CN', {
@@ -142,8 +146,27 @@ const formatWeight = (value) => {
   return Number.isNaN(num) ? value : num.toFixed(2)
 }
 
+// 进行中状态才轮询
+const isInProgress = () => {
+  const s = task.value?.status
+  return s && !['COMPLETED', 'CANCELLED'].includes(s)
+}
+
+const startPolling = () => {
+  pollingTimer = setInterval(() => {
+    if (isInProgress()) {
+      fetchDetail()
+    }
+  }, 30000)
+}
+
 onMounted(() => {
   fetchDetail()
+  startPolling()
+})
+
+onUnmounted(() => {
+  if (pollingTimer) clearInterval(pollingTimer)
 })
 </script>
 
@@ -180,6 +203,12 @@ onMounted(() => {
   font-weight: 600;
 }
 
+.poll-hint {
+  font-size: 12px;
+  color: #909399;
+  font-weight: normal;
+}
+
 .mono {
   font-family: monospace;
   font-size: 15px;
@@ -191,7 +220,20 @@ onMounted(() => {
   font-weight: 600;
 }
 
-.task-steps {
-  padding: 8px 0;
+.task-timeline {
+  padding: 8px 0 0 0;
+}
+
+.timeline-label {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.timeline-done {
+  color: #303133;
+}
+
+.timeline-pending {
+  color: #c0c4cc;
 }
 </style>
