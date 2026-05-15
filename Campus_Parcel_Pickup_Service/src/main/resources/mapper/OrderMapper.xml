@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.team.admin.mapper.OrderMapper">
+
+    <!-- 订单列表查询结果映射 -->
+    <resultMap id="OrderListDTOMap" type="com.team.admin.dto.OrderListDTO">
+        <id column="id" property="id"/>
+        <result column="order_no" property="orderNo"/>
+        <result column="title" property="title"/>
+        <result column="amount" property="amount"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+        <result column="customer_name" property="customerName"/>
+        <result column="runner_name" property="runnerName"/>
+        <result column="customer_student_id" property="customerStudentId"/>
+        <result column="runner_student_id" property="runnerStudentId"/>
+        <result column="customer_phone" property="customerPhone"/>
+        <result column="runner_phone" property="runnerPhone"/>
+    </resultMap>
+
+
+
+    <!-- 订单详情查询结果映射 -->
+    <resultMap id="OrderDetailDTOMap" type="com.team.admin.dto.OrderDetailDTO">
+        <id column="id" property="id"/>
+        <result column="order_no" property="orderNo"/>
+        <result column="title" property="title"/>
+        <result column="amount" property="amount"/>
+        <result column="status" property="status"/>
+        <result column="pickup_code" property="pickupCode"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="customer_name" property="customerName"/>
+        <result column="runner_name" property="runnerName"/>
+        <result column="customer_student_id" property="customerStudentId"/>
+        <result column="runner_student_id" property="runnerStudentId"/>
+        <result column="customer_phone" property="customerPhone"/>
+        <result column="runner_phone" property="runnerPhone"/>
+    </resultMap>
+
+    <resultMap id="CustomerOrderListDTOMap" type="com.team.dto.CustomerOrderListDTO">
+        <id column="id" property="id"/>
+        <result column="order_no" property="orderNo"/>
+        <result column="title" property="title"/>
+        <result column="amount" property="amount"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <!-- 时间线事件结果映射 -->
+
+    <resultMap id="TimelineEventMap" type="com.team.admin.dto.OrderDetailDTO$TimelineEvent">
+        <result column="event" property="event"/>
+        <result column="description" property="description"/>
+        <result column="timestamp" property="timestamp"/>
+    </resultMap>
+
+    <!-- 分页查询订单列表（包含用户姓名） -->
+    <select id="selectOrderListWithNames" resultMap="OrderListDTOMap">
+        SELECT 
+            o.id, o.order_no, o.title, o.amount, o.status, o.create_time,
+            customer.name AS customer_name,
+            runner.name AS runner_name,
+            customer.student_id AS customer_student_id,
+            runner.student_id AS runner_student_id,
+            customer.phone AS customer_phone,
+            runner.phone AS runner_phone
+        FROM orders o
+        LEFT JOIN user customer ON o.customer_id = customer.id
+        LEFT JOIN user runner ON o.runner_id = runner.id
+        <where>
+            <if test="status != null and status != ''">
+                AND o.status = #{status}
+            </if>
+            <if test="runnerName != null and runnerName != ''">
+                AND runner.name LIKE CONCAT('%', #{runnerName}, '%')
+            </if>
+            <if test="customerName != null and customerName != ''">
+                AND customer.name LIKE CONCAT('%', #{customerName}, '%')
+            </if>
+            <if test="orderNo != null and orderNo != ''">
+                AND o.order_no LIKE CONCAT('%', #{orderNo}, '%')
+            </if>
+            <if test="studentId != null and studentId != ''">
+                AND customer.student_id LIKE CONCAT('%', #{studentId}, '%')
+            </if>
+        </where>
+        <choose>
+            <when test="sort == 'ASC'">ORDER BY o.create_time ASC</when>
+            <otherwise>ORDER BY o.create_time DESC</otherwise>
+        </choose>
+    </select>
+
+
+    <!-- 根据订单ID查询订单详情（包含用户姓名和时间线） -->
+    <select id="selectOrderDetailById" resultMap="OrderDetailDTOMap">
+        SELECT 
+            o.id, o.order_no, o.title, o.amount, o.status, o.pickup_code, o.create_time, o.update_time,
+            customer.name AS customer_name,
+            runner.name AS runner_name,
+            customer.student_id AS customer_student_id,
+            runner.student_id AS runner_student_id,
+            customer.phone AS customer_phone,
+            runner.phone AS runner_phone
+        FROM orders o
+        LEFT JOIN user customer ON o.customer_id = customer.id
+        LEFT JOIN user runner ON o.runner_id = runner.id
+        WHERE o.id = #{orderId}
+    </select>
+
+    <!-- 用户端：分页查询当前客户的订单列表 -->
+    <select id="selectCustomerOrders" resultMap="CustomerOrderListDTOMap">
+        SELECT
+            o.id,
+            o.order_no,
+            o.title,
+            o.amount,
+            o.status,
+            o.create_time
+        FROM orders o
+        WHERE o.customer_id = #{customerId}
+        <if test="status != null and status != ''">
+            AND o.status = #{status}
+        </if>
+        <choose>
+            <when test="sort == 'ASC'">ORDER BY o.create_time ASC</when>
+            <otherwise>ORDER BY o.create_time DESC</otherwise>
+        </choose>
+    </select>
+
+    <!-- 跑腿端：分页查询当前跑腿员的订单列表 -->
+    <select id="selectRunnerOrders" resultMap="CustomerOrderListDTOMap">
+        SELECT
+            o.id,
+            o.order_no,
+            o.title,
+            o.amount,
+            o.status,
+            o.create_time
+        FROM orders o
+        WHERE o.runner_id = #{runnerId}
+        <if test="status != null and status != ''">
+            AND o.status = #{status}
+        </if>
+        <choose>
+            <when test="sort == 'ASC'">ORDER BY o.create_time ASC</when>
+            <otherwise>ORDER BY o.create_time DESC</otherwise>
+        </choose>
+    </select>
+
+    <!-- 用户端：根据订单ID与客户ID查询订单详情 -->
+    <select id="selectOrderDetailByIdAndCustomer" resultMap="OrderDetailDTOMap">
+        SELECT
+            o.id, o.order_no, o.title, o.amount, o.status, o.pickup_code, o.create_time, o.update_time,
+            customer.name AS customer_name,
+            runner.name AS runner_name,
+            customer.student_id AS customer_student_id,
+            runner.student_id AS runner_student_id,
+            customer.phone AS customer_phone,
+            runner.phone AS runner_phone
+        FROM orders o
+        LEFT JOIN user customer ON o.customer_id = customer.id
+        LEFT JOIN user runner ON o.runner_id = runner.id
+        WHERE o.id = #{orderId}
+          AND o.customer_id = #{customerId}
+    </select>
+
+    <!-- 跑腿端：根据订单ID与跑腿员ID查询订单详情 -->
+    <select id="selectOrderDetailByIdAndRunner" resultMap="OrderDetailDTOMap">
+        SELECT
+            o.id, o.order_no, o.title, o.amount, o.status, o.pickup_code, o.create_time, o.update_time,
+            customer.name AS customer_name,
+            runner.name AS runner_name,
+            customer.student_id AS customer_student_id,
+            runner.student_id AS runner_student_id,
+            customer.phone AS customer_phone,
+            runner.phone AS runner_phone
+        FROM orders o
+        LEFT JOIN user customer ON o.customer_id = customer.id
+        LEFT JOIN user runner ON o.runner_id = runner.id
+        WHERE o.id = #{orderId}
+          AND o.runner_id = #{runnerId}
+    </select>
+
+</mapper>
+
+

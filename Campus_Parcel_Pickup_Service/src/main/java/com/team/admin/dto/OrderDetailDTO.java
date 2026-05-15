@@ -1,0 +1,257 @@
+package com.team.admin.dto;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+
+/**
+ * 订单详情DTO（包含完整信息和时间线）
+ */
+public class OrderDetailDTO {
+    private Long id;                        // 订单ID
+    private String orderNo;                 // 订单号
+    private String title;                   // 订单标题
+    private BigDecimal amount;              // 订单金额
+    private String status;                  // 订单状态
+    private String pickupCode;              // 取件码
+    private LocalDateTime createTime;       // 创建时间
+    private LocalDateTime updateTime;       // 更新时间
+    private String customerName;            // 客户姓名
+    private String runnerName;              // 跑腿员姓名
+    private String customerStudentId;       // 客户学号（按角色脱敏）
+    private String runnerStudentId;         // 跑腿员学号（按角色脱敏）
+    private String customerPhone;           // 客户手机号（按角色脱敏）
+    private String runnerPhone;             // 跑腿员手机号（按角色脱敏）
+    private List<TimelineEvent> timeline;   // 时间线事件列表
+
+    // 无参构造器
+    public OrderDetailDTO() {
+    }
+
+    // 全参构造器
+    public OrderDetailDTO(Long id, String orderNo, String title, BigDecimal amount, String status, String pickupCode, LocalDateTime createTime, LocalDateTime updateTime, String customerName, String runnerName, String customerStudentId, String runnerStudentId, String customerPhone, String runnerPhone, List<TimelineEvent> timeline) {
+        this.id = id;
+        this.orderNo = orderNo;
+        this.title = title;
+        this.amount = amount;
+        this.status = status;
+        this.pickupCode = pickupCode;
+        this.createTime = createTime;
+        this.updateTime = updateTime;
+        this.customerName = customerName;
+        this.runnerName = runnerName;
+        this.customerStudentId = customerStudentId;
+        this.runnerStudentId = runnerStudentId;
+        this.customerPhone = customerPhone;
+        this.runnerPhone = runnerPhone;
+        this.timeline = timeline;
+    }
+
+    // Getter和Setter方法
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getOrderNo() {
+        return orderNo;
+    }
+
+    public void setOrderNo(String orderNo) {
+        this.orderNo = orderNo;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getPickupCode() {
+        return pickupCode;
+    }
+
+    public void setPickupCode(String pickupCode) {
+        this.pickupCode = pickupCode;
+    }
+
+    public LocalDateTime getCreateTime() {
+        return createTime;
+    }
+
+    public void setCreateTime(LocalDateTime createTime) {
+        this.createTime = createTime;
+    }
+
+    public LocalDateTime getUpdateTime() {
+        return updateTime;
+    }
+
+    public void setUpdateTime(LocalDateTime updateTime) {
+        this.updateTime = updateTime;
+    }
+
+    public String getCustomerName() {
+        return customerName;
+    }
+
+    public void setCustomerName(String customerName) {
+        this.customerName = customerName;
+    }
+
+    public String getRunnerName() {
+        return runnerName;
+    }
+
+    public void setRunnerName(String runnerName) {
+        this.runnerName = runnerName;
+    }
+
+    public String getCustomerStudentId() {
+        return customerStudentId;
+    }
+
+    public void setCustomerStudentId(String customerStudentId) {
+        this.customerStudentId = customerStudentId;
+    }
+
+    public String getRunnerStudentId() {
+        return runnerStudentId;
+    }
+
+    public void setRunnerStudentId(String runnerStudentId) {
+        this.runnerStudentId = runnerStudentId;
+    }
+
+    public String getCustomerPhone() {
+        return customerPhone;
+    }
+
+    public void setCustomerPhone(String customerPhone) {
+        this.customerPhone = customerPhone;
+    }
+
+    public String getRunnerPhone() {
+        return runnerPhone;
+    }
+
+    public void setRunnerPhone(String runnerPhone) {
+        this.runnerPhone = runnerPhone;
+    }
+
+    public List<TimelineEvent> getTimeline() {
+        return timeline;
+    }
+
+    public void setTimeline(List<TimelineEvent> timeline) {
+        this.timeline = timeline;
+    }
+
+    /**
+     * 时间线事件内部类
+     */
+    public static class TimelineEvent {
+        private String event;           // 事件名称
+        private String description;     // 事件描述
+        private String role;            // 操作人角色（CUSTOMER/RUNNER/CS/ADMIN/SYSTEM）
+        private LocalDateTime timestamp; // 事件时间
+
+        // 无参构造器
+        public TimelineEvent() {
+        }
+
+        // 全参构造器
+        public TimelineEvent(String event, String description, String role, LocalDateTime timestamp) {
+            this.event = event;
+            this.description = description;
+            this.role = role;
+            this.timestamp = timestamp;
+        }
+
+        // Getter和Setter方法
+        public String getEvent() {
+            return event;
+        }
+
+        public void setEvent(String event) {
+            this.event = event;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public void setDescription(String description) {
+            this.description = description;
+        }
+
+        public String getRole() {
+            return role;
+        }
+
+        public void setRole(String role) {
+            this.role = role;
+        }
+
+        public LocalDateTime getTimestamp() {
+            return timestamp;
+        }
+
+        public void setTimestamp(LocalDateTime timestamp) {
+            this.timestamp = timestamp;
+        }
+
+        @Override
+        public String toString() {
+            return "TimelineEvent{" +
+                    "event='" + event + '\'' +
+                    ", description='" + description + '\'' +
+                    ", role='" + role + '\'' +
+                    ", timestamp=" + timestamp +
+                    '}';
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "OrderDetailDTO{" +
+                "id=" + id +
+                ", orderNo='" + orderNo + '\'' +
+                ", title='" + title + '\'' +
+                ", amount=" + amount +
+                ", status='" + status + '\'' +
+                ", pickupCode='" + pickupCode + '\'' +
+                ", createTime=" + createTime +
+                ", updateTime=" + updateTime +
+                ", customerName='" + customerName + '\'' +
+                ", runnerName='" + runnerName + '\'' +
+                ", customerStudentId='" + customerStudentId + '\'' +
+                ", runnerStudentId='" + runnerStudentId + '\'' +
+                ", customerPhone='" + customerPhone + '\'' +
+                ", runnerPhone='" + runnerPhone + '\'' +
+                ", timeline=" + timeline +
+                '}';
+    }
+}
+

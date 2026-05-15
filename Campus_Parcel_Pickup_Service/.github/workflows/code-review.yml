@@ -1,0 +1,39 @@
+name: Code Review
+
+on:
+  push:
+分支: [ main, develop ]
+  pull_request:
+分支: [ main ]
+
+jobs:
+  sonarcloud:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # SonarQube 需要完整历史
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: 17
+          distribution: 'temurin'
+
+      - name: Cache SonarCloud packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      - name: Build and analyze
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          # 如果你的项目是 Maven/Gradle，在根目录执行相应命令
+          mvn clean verify sonar:sonar \
+            -Dsonar.projectKey=你的项目key \
+            -Dsonar.organization=你的组织名 \
+            -Dsonar.host.url=https://sonarcloud.io
+          # 如果没有 Maven，可以用 SonarScanner 单独扫描
